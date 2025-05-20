@@ -5,13 +5,14 @@ import {
     TextField,
     Button,
     Typography,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Checkbox,
-    FormControlLabel,
     Stack,
+    MenuItem,
+    InputLabel,
+    Select,
+    FormControl,
+    FormControlLabel,
+    Checkbox,
+    SelectChangeEvent,
 } from '@mui/material';
 
 export interface PublicationFormData {
@@ -22,8 +23,8 @@ export interface PublicationFormData {
     citations: string;
     documents: string;
     cited: string;
-    status: string; // Added for dropdown example
-    isFeatured: boolean; // Added for checkbox example
+    status: string;
+    isFeatured: boolean;
 }
 
 interface PublicationEditorPopoverProps {
@@ -51,7 +52,7 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
     onClose,
     data,
     onSave,
-    anchorPosition = { top: 20, left: window.innerWidth / 2 }, // Default to top-center
+    anchorPosition = { top: 20, left: window.innerWidth / 2 },
 }) => {
     const [formData, setFormData] = useState<PublicationFormData>(initialFormData);
 
@@ -59,24 +60,26 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
         if (data) {
             setFormData(data);
         } else {
-            setFormData(initialFormData); // Reset if no data (e.g. for a new entry form)
+            setFormData(initialFormData);
         }
-    }, [data, open]); // Depend on open to re-initialize if data changes while closed
+    }, [data, open]);
 
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | { name?: string; value: unknown }>) => {
-        const { name, value, type } = event.target as HTMLInputElement;
-        if (type === 'checkbox') {
-            setFormData((prev) => ({ ...prev, [name!]: (event.target as HTMLInputElement).checked }));
-        } else {
-            setFormData((prev) => ({ ...prev, [name!]: value }));
-        }
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = event.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value,
+        }));
     };
 
-    // const handleSelectChange = (event: any) => { // mui.com/material-ui/api/select/#props / mui.com/material-ui/api/select/#SelectChangeEvent
-    //     const { name, value } = event.target;
-    //     setFormData((prev) => ({ ...prev, [name!]: value as string }));
-    // };
-
+    // ✅ Select handler
+    const handleSelectChange = (event: SelectChangeEvent<string>) => {
+        const { name, value } = event.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
 
     const handleSave = () => {
         onSave(formData);
@@ -89,23 +92,20 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
             onClose={onClose}
             anchorReference="anchorPosition"
             anchorPosition={anchorPosition}
-            transformOrigin={{
-                vertical: 'top',
-                horizontal: 'center',
-            }}
+            transformOrigin={{ vertical: 'top', horizontal: 'center' }}
             PaperProps={{
                 sx: {
                     padding: 3,
                     width: '90%',
                     maxWidth: '500px',
-                    background: 'linear-gradient(to bottom, #FFFFFF, #E3F2FD)', // White to light blue gradient
+                    background: 'linear-gradient(to bottom, #FFFFFF, #E3F2FD)',
                     borderRadius: 2,
                     boxShadow: '0px 5px 15px rgba(0,0,0,0.2)',
                 },
             }}
         >
             <Box component="form" noValidate autoComplete="off">
-                <Typography variant="h6" gutterBottom sx={{ color: '#0D47A1', textAlign: 'center', marginBottom: 2 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: '#0D47A1', textAlign: 'center', mb: 2 }}>
                     Add Publication Data
                 </Typography>
                 <Stack spacing={2}>
@@ -113,7 +113,7 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                         label="Source Title"
                         name="sourceTitle"
                         value={formData.sourceTitle}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         fullWidth
                         variant="outlined"
                         size="small"
@@ -122,27 +122,25 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                         label="CiteScore"
                         name="citeScore"
                         value={formData.citeScore}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         fullWidth
                         variant="outlined"
                         size="small"
-                        type="text"
                     />
                     <TextField
                         label="H-Index Percentile"
                         name="hPercentile"
                         value={formData.hPercentile}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         fullWidth
                         variant="outlined"
                         size="small"
-                        type="text"
                     />
                     <TextField
                         label="Citations"
                         name="citations"
                         value={formData.citations}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         fullWidth
                         variant="outlined"
                         size="small"
@@ -152,7 +150,7 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                         label="Documents"
                         name="documents"
                         value={formData.documents}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         fullWidth
                         variant="outlined"
                         size="small"
@@ -162,11 +160,36 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                         label="Cited Documents"
                         name="cited"
                         value={formData.cited}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         fullWidth
                         variant="outlined"
                         size="small"
                         type="number"
+                    />
+
+                    <FormControl fullWidth size="small">
+                        <InputLabel>Status</InputLabel>
+                        <Select
+                            name="status"
+                            value={formData.status}
+                            onChange={handleSelectChange}
+                            label="Status"
+                        >
+                            <MenuItem value="Published">Published</MenuItem>
+                            <MenuItem value="Under Review">Under Review</MenuItem>
+                            <MenuItem value="Draft">Draft</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.isFeatured}
+                                onChange={handleInputChange}
+                                name="isFeatured"
+                            />
+                        }
+                        label="Mark as Featured"
                     />
 
                     <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>

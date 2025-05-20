@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -29,11 +29,12 @@ export function PublicationView() {
   const [openPopover, setOpenPopover] = useState<boolean | null>(false);
   const [filterName, setFilterName] = useState('');
   const [publicationList, setPublicationList] = useState<PublicationProps[]>(publicationData);
-  // Accept newData as PublicationFormData, then add id to create PublicationProps
+  const [editData, setEditData] = useState<PublicationProps | null>(null);
   const handleAddPublication = (newData: PublicationProps) => {
-  const newId = publicationList.length + 1;
+  const newId = Date.now();
   const updated = [...publicationList, { ...newData, id: newId }];
   setPublicationList(updated);
+  localStorage.setItem('publications', JSON.stringify(updated.slice(publicationData.length)));
 };
 
   const dataFiltered: PublicationProps[] = applyFilter({
@@ -43,6 +44,14 @@ export function PublicationView() {
   });
   // console.log('dataFiltered', dataFiltered);
   
+useEffect(() => {
+  const storedData = JSON.parse(localStorage.getItem('publications') || '[]');
+  if (storedData.length > 0) {
+    setPublicationList([...publicationData, ...storedData]);
+  } else {
+    setPublicationList(publicationData);
+  }
+}, []);
 
 
   const notFound = !dataFiltered.length && !!filterName;
@@ -111,11 +120,20 @@ export function PublicationView() {
                   )
                   .map((row) => (
                     <PublicationTableRow
-                      key={row.id}
-                      row={row}
-                      selected={table.selected.includes(row.sourceTitle)}
-                      onSelectRow={() => table.onSelectRow(row.sourceTitle)}
-                    />
+  key={row.id}
+  row={row}
+  selected={table.selected.includes(row.sourceTitle)}
+  onSelectRow={() => table.onSelectRow(row.sourceTitle)}
+  onEditRow={(data) => setEditData(data)}
+  onDeleteRow={(id) => {
+  const updated = publicationList.filter((item) => item.id !== id);
+  setPublicationList(updated);
+
+  // Update localStorage
+  const storedOnly = updated.slice(publicationData.length); // remove mock data part
+  localStorage.setItem('publications', JSON.stringify(storedOnly));
+}}
+/>
                   ))}
 
                 <TableEmptyRows
@@ -143,11 +161,42 @@ export function PublicationView() {
   <AddPublicationData
     open={openPopover}
     onClose={() => setOpenPopover(false)}
-    data={publicationList}
+    data={null}
     onSave={(newData) => {
       handleAddPublication(newData);
       setOpenPopover(false); // Close the popover after saving
     }}
+    anchorPosition={{ top: 100, left: window.innerWidth / 2 }}
+  />
+)}
+
+{/* Edit */}
+{editData && (
+  <AddPublicationData
+    open={!!editData}
+    data={
+      editData
+        ? {
+            ...editData,
+            status: (editData as any).status ?? '',
+            isFeatured: (editData as any).isFeatured ?? false,
+          }
+        : null
+    }
+    onClose={() => setEditData(null)}
+onSave={(newData) => {
+  const updatedList = publicationList.map((item) =>
+    item.id === newData.id ? { ...newData } : item
+  );
+  setPublicationList(updatedList);
+
+  // Update localStorage
+  const storedOnly = updatedList.slice(publicationData.length);
+  localStorage.setItem('publications', JSON.stringify(storedOnly));
+
+  setEditData(null);
+}}
+
     anchorPosition={{ top: 100, left: window.innerWidth / 2 }}
   />
 )}

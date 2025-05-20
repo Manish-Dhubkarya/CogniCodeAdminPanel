@@ -1,6 +1,4 @@
 import { useState, useCallback } from 'react';
-
-import Box from '@mui/material/Box';
 import Popover from '@mui/material/Popover';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
@@ -11,6 +9,7 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
+
 export type PublicationProps = {
     id: number;
     sourceTitle: string;
@@ -25,9 +24,17 @@ type PublicationTableRowProps = {
     row: PublicationProps;
     selected: boolean;
     onSelectRow: () => void;
+    onEditRow: (data: PublicationProps) => void;
+    onDeleteRow: (id: number) => void;
 };
 
-export function PublicationTableRow({ row, selected, onSelectRow }: PublicationTableRowProps) {
+export function PublicationTableRow({
+    row,
+    selected,
+    onSelectRow,
+    onEditRow,
+    onDeleteRow,
+}: PublicationTableRowProps) {
     const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
     const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -38,6 +45,16 @@ export function PublicationTableRow({ row, selected, onSelectRow }: PublicationT
         setOpenPopover(null);
     }, []);
 
+    const handleEdit = () => {
+        handleClosePopover();
+        onEditRow(row);
+    };
+
+    const handleDelete = () => {
+        handleClosePopover();
+        onDeleteRow(row.id);
+    };
+
     return (
         <>
             <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -45,17 +62,12 @@ export function PublicationTableRow({ row, selected, onSelectRow }: PublicationT
                     <Checkbox disableRipple checked={selected} onChange={onSelectRow} />
                 </TableCell>
 
-                <TableCell align='left'>
-                   {row.sourceTitle}
-                </TableCell>
-                <TableCell align='center'>{row.citeScore} </TableCell>
-                <TableCell align='center'>{row.hPercentile}</TableCell>
-                <TableCell align='center'>{row.citations}</TableCell>
-                <TableCell align='center'>{row.documents}</TableCell>
-                <TableCell align='center'>{row.cited}</TableCell>
-                {/* <TableCell>
-          <Label color={(row.id === 'banned' && 'error') || 'success'}>{row.status}</Label>
-        </TableCell> */}
+                <TableCell align="left">{row.sourceTitle}</TableCell>
+                <TableCell align="center">{row.citeScore}</TableCell>
+                <TableCell align="center">{row.hPercentile}</TableCell>
+                <TableCell align="center">{row.citations}</TableCell>
+                <TableCell align="center">{row.documents}</TableCell>
+                <TableCell align="center">{row.cited}</TableCell>
 
                 <TableCell align="right">
                     <IconButton onClick={handleOpenPopover}>
@@ -87,12 +99,12 @@ export function PublicationTableRow({ row, selected, onSelectRow }: PublicationT
                         },
                     }}
                 >
-                    <MenuItem onClick={handleClosePopover}>
+                    <MenuItem onClick={handleEdit}>
                         <Iconify icon="solar:pen-bold" />
                         Edit
                     </MenuItem>
 
-                    <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
+                    <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                         <Iconify icon="solar:trash-bin-trash-bold" />
                         Delete
                     </MenuItem>
