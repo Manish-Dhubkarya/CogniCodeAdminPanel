@@ -1,5 +1,4 @@
 import { Label } from 'src/components/label';
-// import { SvgColor } from 'src/components/svg-color';
 import { GiProgression } from "react-icons/gi";
 import { FaUsers } from "react-icons/fa";
 import { GiVideoConference } from "react-icons/gi";

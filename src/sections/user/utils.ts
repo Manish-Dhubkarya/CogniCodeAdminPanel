@@ -1,3 +1,4 @@
+import { ConferenceProps } from './conference-table-row';
 import type { UserProps } from './user-table-row';
 
 // ----------------------------------------------------------------------
@@ -53,26 +54,38 @@ export function getComparator<Key extends keyof any>(
 // ----------------------------------------------------------------------
 
 type ApplyFilterProps = {
-  inputData: UserProps[];
+  inputData: any[];
+  // inputData2:ConferenceProps[];
   filterName: string;
   comparator: (a: any, b: any) => number;
 };
 
 export function applyFilter({ inputData, comparator, filterName }: ApplyFilterProps) {
   const stabilizedThis = inputData.map((el, index) => [el, index] as const);
+  // const stabilizedThis2 = inputData2.map((el, index) => [el, index] as const);
 
   stabilizedThis.sort((a, b) => {
     const order = comparator(a[0], b[0]);
     if (order !== 0) return order;
     return a[1] - b[1];
   });
+  //  stabilizedThis2.sort((a, b) => {
+  //   const order = comparator(a[0], b[0]);
+  //   if (order !== 0) return order;
+  //   return a[1] - b[1];
+  // });
 
   inputData = stabilizedThis.map((el) => el[0]);
+  // inputData2 = stabilizedThis2.map((el) => el[0]);
 
   if (filterName) {
     inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+      (user) =>user.name && user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+       user.publisher && user.publisher.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 
     );
+    //  inputData2 = inputData2.filter(
+    //   (conference) => conference.Sno.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+    // );
   }
 
   return inputData;

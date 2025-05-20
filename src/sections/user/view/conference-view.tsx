@@ -9,20 +9,21 @@ import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 
-import { _users } from 'src/_mock';
+// import { _conference } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
-
+import { conferenceData } from 'src/_mock/_all-mock-data';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
 import { TableNoData } from 'src/sections/user/table-no-data';
-import { UserTableRow } from 'src/sections/user/user-table-row';
-import { UserTableHead } from 'src/sections/user/user-table-head';
+import { ConferenceTableRow } from '../conference-table-row';
+import { ConferenceTableHead } from '../conference-table-head';
 import { TableEmptyRows } from 'src/sections/user/table-empty-rows';
 import { UserTableToolbar } from 'src/sections/user/user-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/user/utils';
 
-import type { UserProps } from '../user-table-row'
+import type { ConferenceProps } from '../conference-table-row';
+import { useTable } from './user-view';
 
 // ----------------------------------------------------------------------
 
@@ -31,11 +32,14 @@ export function ConferenceView() {
 
   const [filterName, setFilterName] = useState('');
 
-  const dataFiltered: UserProps[] = applyFilter({
-    inputData: _users,
+  const dataFiltered: ConferenceProps[] = applyFilter({
+    inputData: conferenceData,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
+  // console.log('dataFiltered', dataFiltered);
+  
+
 
   const notFound = !dataFiltered.length && !!filterName;
 
@@ -56,7 +60,7 @@ export function ConferenceView() {
           color="inherit"
           startIcon={<Iconify icon="mingcute:add-line" />}
         >
-          New user
+          New Conference
         </Button>
       </Box>
 
@@ -73,25 +77,26 @@ export function ConferenceView() {
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
-              <UserTableHead
+              <ConferenceTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={_users.length}
+                rowCount={conferenceData.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    _users.map((user) => user.id)
+                    conferenceData.map((user) => user.Sno)
                   )
                 }
                 headLabel={[
-                  { id: 'name', label: 'Name' },
-                  { id: 'company', label: 'Company' },
-                  { id: 'role', label: 'Role' },
-                  { id: 'isVerified', label: 'Verified', align: 'center' },
-                  { id: 'status', label: 'Status' },
-                  { id: '' },
+                  { id: 'Sno', label: 'S. No' },
+                  { id: 'publisher', label: 'Publisher' },
+                  { id: 'conferenceName', label: 'Conference Name' },
+                  { id: 'Area_Subject', label: 'Area/Subject', align: 'center' },
+                  { id: 'Lds', label: 'Last date of Submission' },
+                  { id: 'registrationCharges', label: 'Registration Charges' },
+                  { id: 'links', label: 'Links' },
                 ]}
               />
               <TableBody>
@@ -101,17 +106,17 @@ export function ConferenceView() {
                     table.page * table.rowsPerPage + table.rowsPerPage
                   )
                   .map((row) => (
-                    <UserTableRow
+                    <ConferenceTableRow
                       key={row.id}
                       row={row}
-                      selected={table.selected.includes(row.id)}
-                      onSelectRow={() => table.onSelectRow(row.id)}
+                      selected={table.selected.includes(row.Sno)}
+                      onSelectRow={() => table.onSelectRow(row.Sno)}
                     />
                   ))}
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, _users.length)}
+                  emptyRows={emptyRows(table.page, table.rowsPerPage, conferenceData.length)}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -123,7 +128,7 @@ export function ConferenceView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={_users.length}
+          count={conferenceData.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
@@ -134,70 +139,3 @@ export function ConferenceView() {
   );
 }
 
-// ----------------------------------------------------------------------
-
-export function useTable() {
-  const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('name');
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
-  const onSort = useCallback(
-    (id: string) => {
-      const isAsc = orderBy === id && order === 'asc';
-      setOrder(isAsc ? 'desc' : 'asc');
-      setOrderBy(id);
-    },
-    [order, orderBy]
-  );
-
-  const onSelectAllRows = useCallback((checked: boolean, newSelecteds: string[]) => {
-    if (checked) {
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  }, []);
-
-  const onSelectRow = useCallback(
-    (inputValue: string) => {
-      const newSelected = selected.includes(inputValue)
-        ? selected.filter((value) => value !== inputValue)
-        : [...selected, inputValue];
-
-      setSelected(newSelected);
-    },
-    [selected]
-  );
-
-  const onResetPage = useCallback(() => {
-    setPage(0);
-  }, []);
-
-  const onChangePage = useCallback((event: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
-
-  const onChangeRowsPerPage = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setRowsPerPage(parseInt(event.target.value, 10));
-      onResetPage();
-    },
-    [onResetPage]
-  );
-
-  return {
-    page,
-    order,
-    onSort,
-    orderBy,
-    selected,
-    rowsPerPage,
-    onSelectRow,
-    onResetPage,
-    onChangePage,
-    onSelectAllRows,
-    onChangeRowsPerPage,
-  };
-}
