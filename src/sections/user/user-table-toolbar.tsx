@@ -71,9 +71,10 @@ export function UserTableToolbar({
     setTimeout(() => {
       setShowLoader(false);
       setShowConfirmPopup(false);
-      onDeleteRows(selectedIds);
+      
       setShowSuccessMessage(true);
       setTimeout(() => {
+        onDeleteRows(selectedIds);
         setShowSuccessMessage(false);
       }, 3000); // Show success message for 3 seconds
     }, 5000); // Show loader for 5 seconds

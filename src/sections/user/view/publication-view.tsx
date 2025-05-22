@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
@@ -29,9 +29,20 @@ export function PublicationView() {
   const [publicationList, setPublicationList] = useState<PublicationProps[]>(publicationData);
   const [editData, setEditData] = useState<PublicationProps | null>(null);
 
-  const handleAddPublication = (newData: PublicationProps) => {
+  const handleAddPublication = (newData: any) => {
     const newId = Date.now();
-    const updated = [...publicationList, { ...newData, id: newId }];
+    // Convert numeric fields to strings to match PublicationProps
+    const formattedData = {
+      ...newData,
+      sourceTitle: String(newData.sourceTitle),
+      citeScore: Number(newData.citeScore),
+      hPercentile: String(newData.hPercentile),
+      citations: Number(newData.citations),
+      documents: Number(newData.documents),
+      cited: Number(newData.cited),
+      id: newId,
+    };
+    const updated = [...publicationList, formattedData];
     setPublicationList(updated);
     localStorage.setItem('publications', JSON.stringify(updated.slice(publicationData.length)));
     setOpenPopover(false); // Close popover after saving
@@ -91,8 +102,11 @@ export function PublicationView() {
             setFilterName(event.target.value);
             table.onResetPage();
           }}
-          selectedIds={table.selected.map(Number)}
-          onDeleteRows={handleDeleteRows}
+          selectedIds={table.selected.map(
+            (sourceTitle) =>
+              publicationList.find((item) => item.sourceTitle === sourceTitle)?.id
+          ).filter((id): id is number => typeof id === 'number')} // Pass selected row IDs as numbers
+          onDeleteRows={handleDeleteRows} // Pass bulk delete handler
         />
 
         <Scrollbar>
@@ -107,7 +121,7 @@ export function PublicationView() {
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    publicationList.map((user) => String(user.id)) // Convert IDs to string
+                    publicationList.map((user) => String(user.sourceTitle))
                   )
                 }
                 headLabel={[
@@ -132,7 +146,7 @@ export function PublicationView() {
                       selected={table.selected.includes(row.sourceTitle)} // Use ID instead of sourceTitle
                       onSelectRow={() => table.onSelectRow(row.sourceTitle)} // Use ID instead of sourceTitle
                       onEditRow={(data) => setEditData(data)}
-                      onDeleteRow={(id) => {
+                      onDeleteRow={(id:number) => {
                         const updated = publicationList.filter((item) => item.id !== id);
                         setPublicationList(updated);
                         table.onSelectAllRows(
@@ -188,15 +202,29 @@ export function PublicationView() {
             editData
               ? {
                   ...editData,
-                  status: (editData as any).status ?? '',
+                  status: (editData as any).status ?? "",
                   isFeatured: (editData as any).isFeatured ?? false,
+                  citeScore: Number(editData.citeScore),
+                  hPercentile: String(editData.hPercentile),
+                  citations: Number(editData.citations),
+                  documents: Number(editData.documents),
+                  cited: Number(editData.cited),
                 }
               : null
           }
           onClose={() => setEditData(null)}
           onSave={(newData) => {
             const updatedList = publicationList.map((item) =>
-              item.id === newData.id ? { ...newData } : item
+              item.id === newData.id
+                ? {
+                    ...newData,
+                    citeScore: String(newData.citeScore),
+                    hPercentile: String(newData.hPercentile),
+                    citations: String(newData.citations),
+                    documents: String(newData.documents),
+                    cited: String(newData.cited),
+                  }
+                : item
             );
             setPublicationList(updatedList);
             localStorage.setItem(

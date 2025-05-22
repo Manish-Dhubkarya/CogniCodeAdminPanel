@@ -7,49 +7,40 @@ import {
     Button,
     Typography,
     Stack,
-    MenuItem,
-    InputLabel,
-    Select,
-    FormControl,
-    FormControlLabel,
-    Checkbox,
     SelectChangeEvent,
     Backdrop,
     CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-export interface PublicationFormData {
+export interface ConferenceFormData {
+
     id: number;
-    sourceTitle: string;
-    citeScore: number;
-    hPercentile: string;
-    citations: number;
-    documents: number;
-    cited: number;
-    status: string;
-    isFeatured: boolean;
+    publisher: string;
+    conferenceName: string;
+    areaSub: string;
+    Lds: string;
+    registrationCharges: string;
+    links: string;
 }
 
-interface PublicationEditorPopoverProps {
+interface ConferenceEditorPopoverProps {
     open: boolean;
     onClose: () => void;
-    data: PublicationFormData | null;
-    onSave: (updatedData: PublicationFormData) => void;
+    data: ConferenceFormData | null;
+    onSave: (updatedData: ConferenceFormData) => void;
     anchorPosition?: { top: number; left: number };
     heading: string;
 }
 
-const initialFormData: PublicationFormData = {
+const initialFormData: ConferenceFormData = {
     id: 0,
-    sourceTitle: '',
-    citeScore: 0,
-    hPercentile: '',
-    citations: 0,
-    documents: 0,
-    cited: 0,
-    status: 'Published',
-    isFeatured: false,
+    publisher: "",
+    conferenceName: "",
+    areaSub: "",
+    Lds: "",
+    registrationCharges: "",
+    links: ""
 };
 
 // Styled Confirmation Popover
@@ -74,7 +65,7 @@ const SuccessPopoverPaper = styled('div')({
     color: '#4CAF50',
 });
 
-export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
+export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
     open,
     onClose,
     data,
@@ -82,12 +73,12 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
     heading,
     anchorPosition = { top: window.innerHeight / 2, left: window.innerWidth / 2 },
 }) => {
-    const [formData, setFormData] = useState<PublicationFormData>(initialFormData);
+    const [formData, setFormData] = useState<ConferenceFormData>(initialFormData);
     const [animate, setAnimate] = useState(false);
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-    const [errors, setErrors] = useState<Partial<Record<keyof PublicationFormData, boolean>>>({});
+    const [errors, setErrors] = useState<Partial<Record<keyof ConferenceFormData, boolean>>>({});
     const [errorMessage, setErrorMessage] = useState<string>('');
     const paperRef = useRef<HTMLDivElement>(null);
 
@@ -120,35 +111,31 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
     };
 
     const validateForm = (): boolean => {
-        const newErrors: Partial<Record<keyof PublicationFormData, boolean>> = {};
+        const newErrors: Partial<Record<keyof ConferenceFormData, boolean>> = {};
         let isValid = true;
 
-        if (!formData.sourceTitle.trim()) {
-            newErrors.sourceTitle = true;
+        if (!formData.conferenceName.trim()) {
+            newErrors.conferenceName = true;
             isValid = false;
         }
-        if (!formData.citeScore || isNaN(Number(formData.citeScore)) || Number(formData.citeScore) < 0) {
-            newErrors.citeScore = true;
+        if (!formData.Lds.trim()) {
+            newErrors.Lds = true;
             isValid = false;
         }
-        if (!formData.hPercentile.trim()) {
-            newErrors.hPercentile = true;
+        if (!formData.areaSub.trim()) {
+            newErrors.areaSub = true;
             isValid = false;
         }
-        if (!formData.citations || isNaN(Number(formData.citations)) || Number(formData.citations) < 0) {
-            newErrors.citations = true;
+        if (!formData.publisher.trim()) {
+            newErrors.publisher = true;
             isValid = false;
         }
-        if (!formData.documents || isNaN(Number(formData.documents)) || Number(formData.documents) < 0) {
-            newErrors.documents = true;
+        if (!formData.links.trim()) {
+            newErrors.links = true;
             isValid = false;
         }
-        if (!formData.cited || isNaN(Number(formData.cited)) || Number(formData.cited) < 0) {
-            newErrors.cited = true;
-            isValid = false;
-        }
-        if (!formData.status) {
-            newErrors.status = true;
+        if (!formData.registrationCharges.trim()) {
+            newErrors.registrationCharges = true;
             isValid = false;
         }
 
@@ -210,7 +197,7 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
             >
                 <Popover
                     open={open}
-                    onClose={() => {}} // Disable default close on backdrop click
+                    onClose={() => { }} // Disable default close on backdrop click
                     anchorReference="anchorPosition"
                     anchorPosition={anchorPosition}
                     transformOrigin={{ vertical: 'center', horizontal: 'center' }}
@@ -242,102 +229,70 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                         </Typography>
                         <Stack spacing={2}>
                             <TextField
-                                label="Source Title"
-                                name="sourceTitle"
-                                value={formData.sourceTitle}
+                                label="Publisher"
+                                name="publisher"
+                                value={formData.publisher}
                                 onChange={handleInputChange}
                                 fullWidth
                                 variant="outlined"
                                 size="small"
-                                error={!!errors.sourceTitle}
-                                helperText={errors.sourceTitle ? 'This field is required' : ''}
+                                error={!!errors.publisher}
+                                helperText={errors.publisher ? 'This field is required' : ''}
                             />
                             <TextField
-                                label="CiteScore"
-                                name="citeScore"
-                                value={formData.citeScore}
+                                label="Conference"
+                                name="conferenceName"
+                                value={formData.conferenceName}
                                 onChange={handleInputChange}
                                 fullWidth
-                                type='number'
                                 variant="outlined"
                                 size="small"
-                                error={!!errors.citeScore}
-                                helperText={errors.citeScore ? 'This field is required' : ''}
+                                error={!!errors.conferenceName}
+                                helperText={errors.conferenceName ? 'This field is required' : ''}
                             />
                             <TextField
-                                label="Highest Percentile"
-                                name="hPercentile"
-                                value={formData.hPercentile}
+                                label="Area/Subject"
+                                name="areaSub"
+                                value={formData.areaSub}
                                 onChange={handleInputChange}
                                 fullWidth
                                 variant="outlined"
                                 size="small"
-                                error={!!errors.hPercentile}
-                                helperText={errors.hPercentile ? 'This field is required' : ''}
+                                error={!!errors.areaSub}
+                                helperText={errors.areaSub ? 'This field is required' : ''}
                             />
                             <TextField
-                                label="Citations"
-                                name="citations"
-                                value={formData.citations}
+                                label="Last Date of Submission"
+                                name="Lds"
+                                value={formData.Lds}
                                 onChange={handleInputChange}
                                 fullWidth
                                 variant="outlined"
                                 size="small"
-                                type="number"
-                                error={!!errors.citations}
-                                helperText={errors.citations ? 'Please enter a valid number' : ''}
+                                error={!!errors.Lds}
+                                helperText={errors.Lds ? 'This field is required' : ''}
                             />
                             <TextField
-                                label="Documents"
-                                name="documents"
-                                value={formData.documents}
+                                label="Registration Charges"
+                                name="registrationCharges"
+                                value={formData.registrationCharges}
                                 onChange={handleInputChange}
                                 fullWidth
                                 variant="outlined"
                                 size="small"
-                                type="number"
-                                error={!!errors.documents}
-                                helperText={errors.documents ? 'Please enter a valid number' : ''}
+                                error={!!errors.registrationCharges}
+                                helperText={errors.registrationCharges ? 'This field is required' : ''}
                             />
                             <TextField
-                                label="Cited"
-                                name="cited"
-                                value={formData.cited}
+                                label="Links"
+                                name="links"
+                                value={formData.links}
                                 onChange={handleInputChange}
                                 fullWidth
                                 variant="outlined"
                                 size="small"
-                                type="number"
-                                error={!!errors.cited}
-                                helperText={errors.cited ? 'Please enter a valid number' : ''}
-                            />
-                            <FormControl fullWidth size="small" error={!!errors.status}>
-                                <InputLabel>Status</InputLabel>
-                                <Select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleSelectChange}
-                                    label="Status"
-                                >
-                                    <MenuItem value="Published">Published</MenuItem>
-                                    <MenuItem value="Under Review">Under Review</MenuItem>
-                                    <MenuItem value="Draft">Draft</MenuItem>
-                                </Select>
-                                {errors.status && (
-                                    <Typography variant="caption" color="error">
-                                        This field is required
-                                    </Typography>
-                                )}
-                            </FormControl>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={formData.isFeatured}
-                                        onChange={handleInputChange}
-                                        name="isFeatured"
-                                    />
-                                }
-                                label="Mark as Featured"
+                                error={!!errors.links}
+                                helperText={errors.links ? 'Please enter a valid number' : ''}
                             />
                             {errorMessage && (
                                 <Typography variant="body2" color="error" sx={{ mt: 1 }}>
@@ -427,7 +382,7 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                 {/* Success Message Popover */}
                 <Popover
                     open={showSuccessMessage}
-                    onClose={() => {}} // Disable manual closing; handled by timer
+                    onClose={() => { }} // Disable manual closing; handled by timer
                     anchorReference="anchorPosition"
                     anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
                     transformOrigin={{ vertical: 'center', horizontal: 'center' }}
@@ -436,20 +391,20 @@ export const AddPublicationData: React.FC<PublicationEditorPopoverProps> = ({
                         sx: { zIndex: 1500 },
                     }}
                 >
-                   <Typography
-  variant="body1"
-  sx={{
-    fontWeight: 'bold',
-    color: "#1dd714",
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center"
-  }}
->
-  <FaRegCheckCircle style={{ marginRight: 5 }} />
-  Data saved successfully
-</Typography>
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            fontWeight: 'bold',
+                            color: "#1dd714",
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center"
+                        }}
+                    >
+                        <FaRegCheckCircle style={{ marginRight: 5 }} />
+                        Data saved successfully
+                    </Typography>
                 </Popover>
             </Backdrop>
         </>
