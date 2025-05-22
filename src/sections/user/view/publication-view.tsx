@@ -91,11 +91,8 @@ export function PublicationView() {
             setFilterName(event.target.value);
             table.onResetPage();
           }}
-          selectedIds={table.selected.map(
-            (sourceTitle) =>
-              publicationList.find((item) => item.sourceTitle === sourceTitle)?.id
-          ).filter((id): id is number => typeof id === 'number')} // Pass selected row IDs as numbers
-          onDeleteRows={handleDeleteRows} // Pass bulk delete handler
+          selectedIds={table.selected.map(Number)}
+          onDeleteRows={handleDeleteRows}
         />
 
         <Scrollbar>
