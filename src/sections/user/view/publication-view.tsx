@@ -45,7 +45,7 @@ export function PublicationView() {
     const updated = [...publicationList, formattedData];
     setPublicationList(updated);
     localStorage.setItem('publications', JSON.stringify(updated.slice(publicationData.length)));
-    setOpenPopover(false); // Close popover after saving
+    setOpenPopover(true); // Close popover after saving
   };
 
   const handleDeleteRows = (ids: number[]) => {

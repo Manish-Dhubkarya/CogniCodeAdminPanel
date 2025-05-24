@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaRegCheckCircle } from "react-icons/fa";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
     Popover,
     Box,
     TextField,
     Button,
+
     Typography,
     Stack,
     SelectChangeEvent,
@@ -12,6 +16,7 @@ import {
     CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import dayjs from 'dayjs';
 
 export interface ConferenceFormData {
 
@@ -261,17 +266,31 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                                 error={!!errors.areaSub}
                                 helperText={errors.areaSub ? 'This field is required' : ''}
                             />
-                            <TextField
-                                label="Last Date of Submission"
-                                name="Lds"
-                                value={formData.Lds}
-                                onChange={handleInputChange}
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                error={!!errors.Lds}
-                                helperText={errors.Lds ? 'This field is required' : ''}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    name="Lds"
+                                    label="Last Date of Submission"
+                                    value={formData.Lds ? dayjs(formData.Lds) : null}
+                                    onChange={(value) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            Lds: value ? dayjs(value).format('DD-MM-YYYY') : "",
+                                        }));
+                                        setErrors((prev) => ({ ...prev, Lds: false }));
+                                        setErrorMessage('');
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            name: "Lds",
+                                            error: !!errors.Lds,
+                                            helperText: errors.Lds ? 'This field is required' : '',
+                                            size: "small",
+                                            fullWidth: true,
+                                            variant: "outlined",
+                                        }
+                                    }}
+                                />
+                            </LocalizationProvider>
                             <TextField
                                 label="Registration Charges"
                                 name="registrationCharges"
