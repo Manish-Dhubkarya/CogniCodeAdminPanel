@@ -35,7 +35,8 @@ export function ConferenceView() {
       ...newData,
       publisher: String(newData.publisher),
       conferenceName: String(newData.conferenceName),
-      areaSub: String(newData.areaSub),
+      area: String(newData.area),
+      subject: String(newData.subject),
       Lds: String(newData.Lds),
       registrationCharges: String(newData.registrationCharges),
       links: String(newData.links),
@@ -207,7 +208,8 @@ export function ConferenceView() {
                   ...editData,
                   publisher: String(editData.publisher),
                   conferenceName: String(editData.conferenceName),
-                  areaSub: String(editData.areaSub),
+                  area: String(editData.area),
+                  subject: String(editData.subject),
                   Lds: String(editData.Lds),
                   registrationCharges: String(editData.registrationCharges),
                   links: String(editData.links),
@@ -217,13 +219,15 @@ export function ConferenceView() {
           onClose={() => setEditData(null)}
           onSave={(newData) => {
             const updatedList = conferenceList.map((item) =>
-              item.id === newData.id
+              // use publisher because id gives error
+              item.publisher === newData.publisher
                 ? {
                     ...item,
                     ...newData,
                     publisher: String(newData.publisher),
                     conferenceName: String(newData.conferenceName),
-                    areaSub: String(newData.areaSub),
+                    area: String(newData.area),
+                    subject: String(newData.subject),
                     Lds: String(newData.Lds),
                     registrationCharges: String(newData.registrationCharges),
                     links: String(newData.links),

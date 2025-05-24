@@ -18,7 +18,8 @@ export type ConferenceProps = {
   Sno: string;
   publisher: string;
   conferenceName: string;
-  areaSub: string;
+  area: string;
+  subject: string;
   Lds: string;
   registrationCharges: string;
   links: string;
@@ -113,7 +114,7 @@ export function ConferenceTableRow({
         </TableCell>
         <TableCell>{row.publisher}</TableCell>
         <TableCell>{row.conferenceName}</TableCell>
-        <TableCell>{row.areaSub}</TableCell>
+        <TableCell>{row.area}/{row.subject}</TableCell>
         <TableCell>{row.Lds}</TableCell>
         <TableCell>{row.registrationCharges}</TableCell>
         <TableCell>{row.links}</TableCell>

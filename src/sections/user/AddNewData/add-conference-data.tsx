@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaRegCheckCircle } from "react-icons/fa";
+import { FaRegCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { postData } from 'src/services/FetchBackendServices';
 import {
     Popover,
     Box,
     TextField,
     Button,
-
     Typography,
     Stack,
     SelectChangeEvent,
@@ -19,11 +19,10 @@ import { styled } from '@mui/material/styles';
 import dayjs from 'dayjs';
 
 export interface ConferenceFormData {
-
-    id: number;
     publisher: string;
     conferenceName: string;
-    areaSub: string;
+    area: string;
+    subject: string;
     Lds: string;
     registrationCharges: string;
     links: string;
@@ -39,10 +38,10 @@ interface ConferenceEditorPopoverProps {
 }
 
 const initialFormData: ConferenceFormData = {
-    id: 0,
     publisher: "",
     conferenceName: "",
-    areaSub: "",
+    area: "",
+    subject: "",
     Lds: "",
     registrationCharges: "",
     links: ""
@@ -70,6 +69,19 @@ const SuccessPopoverPaper = styled('div')({
     color: '#4CAF50',
 });
 
+// Styled Error Popover
+const ErrorPopoverPaper = styled('div')({
+    padding: 16,
+    background: '#FFFFFF',
+    borderRadius: 8,
+    boxShadow: '0px 5px 15px rgba(0,0,0,0.2)',
+    width: '300px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: '#D32F2F',
+});
+
 export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
     open,
     onClose,
@@ -83,6 +95,8 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [showErrorMessage, setShowErrorMessage] = useState(false);
+    const [errorPopupMessage, setErrorPopupMessage] = useState<string>('');
     const [errors, setErrors] = useState<Partial<Record<keyof ConferenceFormData, boolean>>>({});
     const [errorMessage, setErrorMessage] = useState<string>('');
     const paperRef = useRef<HTMLDivElement>(null);
@@ -105,15 +119,15 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
         setErrorMessage('');
     };
 
-    const handleSelectChange = (event: SelectChangeEvent<string>) => {
-        const { name, value } = event.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-        setErrors((prev) => ({ ...prev, [name]: false }));
-        setErrorMessage('');
-    };
+    // const handleSelectChange = (event: SelectChangeEvent<string>) => {
+    //     const { name, value } = event.target;
+    //     setFormData((prev) => ({
+    //         ...prev,
+    //         [name]: value,
+    //     }));
+    //     setErrors((prev) => ({ ...prev, [name]: false }));
+    //     setErrorMessage('');
+    // };
 
     const validateForm = (): boolean => {
         const newErrors: Partial<Record<keyof ConferenceFormData, boolean>> = {};
@@ -127,8 +141,12 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
             newErrors.Lds = true;
             isValid = false;
         }
-        if (!formData.areaSub.trim()) {
-            newErrors.areaSub = true;
+        if (!formData.area.trim()) {
+            newErrors.area = true;
+            isValid = false;
+        }
+        if (!formData.subject.trim()) {
+            newErrors.subject = true;
             isValid = false;
         }
         if (!formData.publisher.trim()) {
@@ -151,29 +169,52 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
         return isValid;
     };
 
-    const handleSaveAttempt = () => {
+    const handleSaveAttempt = async () => {
         if (validateForm()) {
             setShowConfirmPopup(true);
         }
     };
 
-    const handleConfirmSave = () => {
+    const handleConfirmSave = async () => {
         setShowConfirmPopup(false);
         setShowLoader(true);
+        console.log("Enter inside confirm Save");
+        console.log("Form Data publisher before sending:", formData.publisher);
 
-        setTimeout(() => {
+        try {
+            const body={"publisher":formData.publisher, "conferenceName":formData.conferenceName, "area":formData.area, "subject":formData.subject, "lastDOfSub":formData.Lds, "registrationCharges":formData.registrationCharges, "links":formData.links}
+
+    
+            const response = await postData("conferences/submit_conference", body)
+
+            if (response) {
+                console.log("Data saved successfully:", response);
+                setShowLoader(false);
+                onSave(formData); // Save data after successful submission
+                setShowSuccessMessage(true);
+
+                setTimeout(() => {
+                    setShowSuccessMessage(false);
+                    // Clear form fields after success message
+                    setFormData(initialFormData);
+                    setErrors({});
+                    setErrorMessage('');
+                }, 3000); // Show success message for 3 seconds
+            } else {
+                console.error("Failed to save data:", response.message);
+                throw new Error(response.message || 'Failed to save data');
+            }
+        } catch (error) {
+            console.error("Catch Error saving data:", error);
             setShowLoader(false);
-            onSave(formData); // Save data after loader
-            setShowSuccessMessage(true);
+            setErrorPopupMessage(error instanceof Error ? error.message : 'An error occurred');
+            setShowErrorMessage(true);
 
             setTimeout(() => {
-                setShowSuccessMessage(false);
-                // Clear form fields after success message
-                setFormData(initialFormData);
-                setErrors({});
-                setErrorMessage('');
-            }, 3000); // Show success message for 2 seconds
-        }, 5000); // Show loader for 1 second
+                setShowErrorMessage(false);
+                setErrorPopupMessage('');
+            }, 3000); // Show error message for 3 seconds
+        }
     };
 
     const handleCancelConfirm = () => {
@@ -256,29 +297,41 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                                 helperText={errors.conferenceName ? 'This field is required' : ''}
                             />
                             <TextField
-                                label="Area/Subject"
-                                name="areaSub"
-                                value={formData.areaSub}
+                                label="Area"
+                                name="area"
+                                value={formData.area}
                                 onChange={handleInputChange}
                                 fullWidth
                                 variant="outlined"
                                 size="small"
-                                error={!!errors.areaSub}
-                                helperText={errors.areaSub ? 'This field is required' : ''}
+                                error={!!errors.area}
+                                helperText={errors.area ? 'This field is required' : ''}
+                            />
+                            <TextField
+                                label="Subject"
+                                name="subject"
+                                value={formData.subject}
+                                onChange={handleInputChange}
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                error={!!errors.subject}
+                                helperText={errors.subject ? 'This field is required' : ''}
                             />
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     name="Lds"
                                     label="Last Date of Submission"
-                                    value={formData.Lds ? dayjs(formData.Lds) : null}
+                                    value={formData.Lds ? dayjs(formData.Lds, 'DD-MM-YYYY') : null} // Parse the stored value
                                     onChange={(value) => {
                                         setFormData((prev) => ({
                                             ...prev,
-                                            Lds: value ? dayjs(value).format('DD-MM-YYYY') : "",
+                                            Lds: value && dayjs(value).isValid() ? dayjs(value).format('DD-MM-YYYY') : '',
                                         }));
                                         setErrors((prev) => ({ ...prev, Lds: false }));
                                         setErrorMessage('');
                                     }}
+                                    format="DD-MM-YYYY" // Explicitly set the display and input format
                                     slotProps={{
                                         textField: {
                                             name: "Lds",
@@ -287,7 +340,7 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                                             size: "small",
                                             fullWidth: true,
                                             variant: "outlined",
-                                        }
+                                        },
                                     }}
                                 />
                             </LocalizationProvider>
@@ -423,6 +476,34 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                     >
                         <FaRegCheckCircle style={{ marginRight: 5 }} />
                         Data saved successfully
+                    </Typography>
+                </Popover>
+
+                {/* Error Message Popover */}
+                <Popover
+                    open={showErrorMessage}
+                    onClose={() => { }} // Disable manual closing; handled by timer
+                    anchorReference="anchorPosition"
+                    anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
+                    transformOrigin={{ vertical: 'center', horizontal: 'center' }}
+                    PaperProps={{
+                        component: ErrorPopoverPaper,
+                        sx: { zIndex: 1500 },
+                    }}
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            fontWeight: 'bold',
+                            color: "#D32F2F",
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center"
+                        }}
+                    >
+                        <FaExclamationCircle style={{ marginRight: 5 }} />
+                        {errorPopupMessage || 'Failed to save data'}
                     </Typography>
                 </Popover>
             </Backdrop>

@@ -10,7 +10,6 @@ import {
   _description,
   _productNames,
 } from './_mock';
-// import {_id as id2, _Sno, _Lds, _RegistrationCharges,_areaSub, _publisher, _links, _conferenceName } from './_conference_mock';
 // ----------------------------------------------------------------------
 
 export const _myAccount = {
@@ -42,19 +41,6 @@ export const _users = [...Array(24)].map((_, index) => ({
       'Full Stack Developer',
     ][index] || 'UI Designer',
 }));
-
-// export const _conference = [...Array(8)].map((_, index) => ({
-//   id: id2(index),
-//   Sno:_Sno(index),
-//   publisher:_publisher(index),
-//   conferenceName: _conferenceName(index),
-//   areaSub: _areaSub(index),
-//   Lds: _Lds(index),
-//   registrationCharges: _RegistrationCharges(index),
-//   links: _links(index),
-// }));
-
-// ----------------------------------------------------------------------
 
 export const _posts = [...Array(23)].map((_, index) => ({
   id: _id(index),

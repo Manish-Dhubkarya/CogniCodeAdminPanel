@@ -85,7 +85,8 @@ export function applyFilter({ inputData, comparator, filterName }: ApplyFilterPr
 
       //  conference table filters
         user.conferenceName && user.conferenceName.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
-        user.areaSub && user.areaSub.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+        user.area && user.area.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+        user.subject && user.subject.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
         user.Lds && user.Lds.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
         user.registrationCharges && user.registrationCharges.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
         user.links && user.links.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
