@@ -11,7 +11,6 @@ import {
     Button,
     Typography,
     Stack,
-    SelectChangeEvent,
     Backdrop,
     CircularProgress,
 } from '@mui/material';
@@ -19,6 +18,7 @@ import { styled } from '@mui/material/styles';
 import dayjs from 'dayjs';
 
 export interface ConferenceFormData {
+    conferenceId?: number; // Add conferenceID for editing
     publisher: string;
     conferenceName: string;
     area: string;
@@ -119,16 +119,6 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
         setErrorMessage('');
     };
 
-    // const handleSelectChange = (event: SelectChangeEvent<string>) => {
-    //     const { name, value } = event.target;
-    //     setFormData((prev) => ({
-    //         ...prev,
-    //         [name]: value,
-    //     }));
-    //     setErrors((prev) => ({ ...prev, [name]: false }));
-    //     setErrorMessage('');
-    // };
-
     const validateForm = (): boolean => {
         const newErrors: Partial<Record<keyof ConferenceFormData, boolean>> = {};
         let isValid = true;
@@ -178,19 +168,34 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
     const handleConfirmSave = async () => {
         setShowConfirmPopup(false);
         setShowLoader(true);
-        console.log("Enter inside confirm Save");
-        console.log("Form Data publisher before sending:", formData.publisher);
+        console.log("Form Data before sending:", formData);
 
         try {
-            const body={"publisher":formData.publisher, "conferenceName":formData.conferenceName, "area":formData.area, "subject":formData.subject, "lastDOfSub":formData.Lds, "registrationCharges":formData.registrationCharges, "links":formData.links}
+            const body = {
+                conferenceId: formData.conferenceId, // Include conferenceID for editing
+                publisher: formData.publisher,
+                conferenceName: formData.conferenceName,
+                area: formData.area,
+                subject: formData.subject,
+                lastDOfSub: formData.Lds,
+                registrationCharges: formData.registrationCharges,
+                links: formData.links,
+            };
 
-    
-            const response = await postData("conferences/submit_conference", body)
+            // Determine the endpoint based on whether we're adding or editing
+            const endpoint = formData.conferenceId
+                ? "conferences/update_conference" // Edit
+                : "conferences/submit_conference"; // Add
 
-            if (response) {
-                console.log("Data saved successfully:", response);
+            const response = await postData(endpoint, body);
+
+            // Ensure loader is visible for at least 1 second
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            if (response && response.status) {
+                console.log("Data saved/updated successfully:", response);
                 setShowLoader(false);
-                onSave(formData); // Save data after successful submission
+                onSave(formData); // Notify parent to refetch data
                 setShowSuccessMessage(true);
 
                 setTimeout(() => {
@@ -201,11 +206,10 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                     setErrorMessage('');
                 }, 3000); // Show success message for 3 seconds
             } else {
-                console.error("Failed to save data:", response.message);
-                throw new Error(response.message || 'Failed to save data');
+                throw new Error(response?.message || 'No response received from server');
             }
         } catch (error) {
-            console.error("Catch Error saving data:", error);
+            console.error("Error saving/updating data:", error);
             setShowLoader(false);
             setErrorPopupMessage(error instanceof Error ? error.message : 'An error occurred');
             setShowErrorMessage(true);
@@ -322,7 +326,7 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                                 <DatePicker
                                     name="Lds"
                                     label="Last Date of Submission"
-                                    value={formData.Lds ? dayjs(formData.Lds, 'DD-MM-YYYY') : null} // Parse the stored value
+                                    value={formData.Lds ? dayjs(formData.Lds, 'DD-MM-YYYY') : null}
                                     onChange={(value) => {
                                         setFormData((prev) => ({
                                             ...prev,
@@ -331,7 +335,7 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                                         setErrors((prev) => ({ ...prev, Lds: false }));
                                         setErrorMessage('');
                                     }}
-                                    format="DD-MM-YYYY" // Explicitly set the display and input format
+                                    format="DD-MM-YYYY"
                                     slotProps={{
                                         textField: {
                                             name: "Lds",
@@ -475,7 +479,7 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                         }}
                     >
                         <FaRegCheckCircle style={{ marginRight: 5 }} />
-                        Data saved successfully
+                        {formData.conferenceId ? 'Data updated successfully' : 'Data added successfully'}
                     </Typography>
                 </Popover>
 

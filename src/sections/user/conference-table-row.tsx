@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
 import Popover from '@mui/material/Popover';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
@@ -10,17 +9,17 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { Iconify } from 'src/components/iconify';
 import { FaRegCheckCircle } from 'react-icons/fa';
 import { Button, CircularProgress, Stack, styled, Typography } from '@mui/material';
+import { postData } from 'src/services/FetchBackendServices';
 
 // ----------------------------------------------------------------------
 
 export type ConferenceProps = {
-  id: number;
-  Sno: string;
+  conferenceID: number;
   publisher: string;
   conferenceName: string;
   area: string;
   subject: string;
-  Lds: string;
+  lastDOfSub: string;
   registrationCharges: string;
   links: string;
 };
@@ -88,18 +87,35 @@ export function ConferenceTableRow({
     setShowConfirmPopup(false);
   };
 
-  const handleConfirmDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleConfirmDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation(); // Prevent any unexpected event bubbling
-    setShowConfirmPopup(true);
-    setShowLoader(true);
-    setTimeout(() => {
-      setShowLoader(false);
-      onDeleteRow(row.id);
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 3000); // Show success message for 3 seconds
-    }, 5000); // Show loader for 5 seconds
+    setShowConfirmPopup(false); // Close confirmation popup
+    setShowLoader(true); // Show loader
+
+    try {
+      // Make a DELETE request to the backend using postData
+      const result = await postData("conferences/delete_conference", { conferenceId: row.conferenceID });
+
+      // Simulate loader for at least 1 second for better UX
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      if (result.status) {
+        setShowLoader(false); // Hide loader
+        onDeleteRow(row.conferenceID); // Notify parent to refetch data
+        setShowSuccessMessage(true); // Show success message
+
+        setTimeout(() => {
+          setShowSuccessMessage(false); // Hide success message after 3 seconds
+        }, 3000);
+      } else {
+        throw new Error(result.message || 'Failed to delete conference');
+      }
+    } catch (error) {
+      console.error("Error deleting conference:", error);
+      setShowLoader(false); // Hide loader on error
+      setShowSuccessMessage(false); // Ensure success message is not shown
+      // Optionally, show an error message to the user
+    }
   };
 
   return (
@@ -110,12 +126,14 @@ export function ConferenceTableRow({
         </TableCell>
 
         <TableCell component="th" scope="row">
-          {row.id}
+          {row.conferenceID}
         </TableCell>
         <TableCell>{row.publisher}</TableCell>
         <TableCell>{row.conferenceName}</TableCell>
-        <TableCell>{row.area}/{row.subject}</TableCell>
-        <TableCell>{row.Lds}</TableCell>
+        <TableCell>
+          {row.area}/{row.subject}
+        </TableCell>
+        <TableCell>{row.lastDOfSub}</TableCell>
         <TableCell>{row.registrationCharges}</TableCell>
         <TableCell>{row.links}</TableCell>
 
@@ -175,7 +193,7 @@ export function ConferenceTableRow({
         }}
       >
         <Typography variant="body1" sx={{ mb: 0, p: 1 }}>
-          Are you sure you want to delete the changes?
+          Are you sure you want to delete this conference?
         </Typography>
         <Stack direction="row" spacing={2} padding={1} justifyContent="flex-end">
           <Button
@@ -219,7 +237,7 @@ export function ConferenceTableRow({
         <CircularProgress color="primary" size={40} />
       </Popover>
 
-      {/* Delete Message Popover */}
+      {/* Delete Success Message Popover */}
       <Popover
         open={showSuccessMessage}
         onClose={() => {}} // Disable manual closing; handled by timer

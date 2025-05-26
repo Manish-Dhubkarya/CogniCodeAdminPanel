@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { conferenceData } from 'src/_mock/_all-mock-data';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { TableNoData } from 'src/sections/user/table-no-data';
@@ -16,9 +15,22 @@ import { TableEmptyRows } from 'src/sections/user/table-empty-rows';
 import { UserTableToolbar } from 'src/sections/user/user-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/user/utils';
 import { useTable } from './user-view';
-import { ConferenceProps, ConferenceTableRow } from '../conference-table-row';
+import { ConferenceTableRow } from '../conference-table-row';
 import { AddConferenceData } from '../AddNewData/add-conference-data';
 import { ConferenceTableHead } from '../conference-table-head';
+import { getData, postData } from 'src/services/FetchBackendServices';
+
+// Define the interface for conference data based on the backend response
+interface ConferenceProps {
+  conferenceID: number;
+  publisher: string;
+  conferenceName: string;
+  area: string;
+  subject: string;
+  lastDOfSub: string;
+  registrationCharges: string;
+  links: string;
+}
 
 // ----------------------------------------------------------------------
 
@@ -26,55 +38,74 @@ export function ConferenceView() {
   const table = useTable();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [filterName, setFilterName] = useState('');
-  const [conferenceList, setConferenceList] = useState<ConferenceProps[]>(conferenceData);
+  const [conferenceList, setConferenceList] = useState<ConferenceProps[]>([]);
   const [editData, setEditData] = useState<ConferenceProps | null>(null);
 
-  const handleAddConference = (newData: any) => {
-    const newId = Date.now();
-    const formattedData = {
-      ...newData,
-      publisher: String(newData.publisher),
-      conferenceName: String(newData.conferenceName),
-      area: String(newData.area),
-      subject: String(newData.subject),
-      Lds: String(newData.Lds),
-      registrationCharges: String(newData.registrationCharges),
-      links: String(newData.links),
-      id: newId,
-      Sno: String(newId), // Ensure Sno is set for new rows
-    };
-    const updated = [...conferenceList, formattedData];
-    setConferenceList(updated);
-    localStorage.setItem('conferences', JSON.stringify(updated.slice(conferenceData.length)));
-    setOpenPopover(false); // Close popover after saving
+  // Fetch all conferences from the backend
+  const fetchAllConferences = async () => {
+    try {
+      const response = await getData("conferences/display_all_conferences");
+      if (response && response.data) {
+        // Map the response data to match the ConferenceProps interface
+        const formattedData = response.data.map((item: any) => ({
+          conferenceID: item.conferenceId, // Match backend field name
+          publisher: String(item.publisher),
+          conferenceName: String(item.conferenceName),
+          area: String(item.area),
+          subject: String(item.subject),
+          lastDOfSub: String(item.lastDOfSub),
+          registrationCharges: String(item.registrationCharges),
+          links: String(item.links),
+        }));
+        setConferenceList(formattedData);
+      } else {
+        console.error("No data received from the backend");
+        setConferenceList([]);
+      }
+    } catch (error) {
+      console.error("Error fetching conferences:", error);
+      setConferenceList([]);
+    }
   };
 
-  const handleDeleteRows = (ids: number[]) => {
-    const updated = conferenceList.filter((item) => !ids.includes(item.id));
-    setConferenceList(updated);
-    table.onSelectAllRows(false, []); // Clear selected rows
-    localStorage.setItem('conferences', JSON.stringify(updated.slice(conferenceData.length)));
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchAllConferences();
+  }, []);
+
+  // Handle adding a new conference
+  const handleAddConference = async (newData: any) => {
+    try {
+      await fetchAllConferences();
+    } catch (error) {
+      console.error("Error after adding conference:", error);
+      await fetchAllConferences(); // Refetch to ensure consistency
+    }
   };
 
+  // Handle deleting rows (bulk deletion)
+  const handleDeleteRows = async (ids: number[]) => {
+    try {
+      for (const id of ids) {
+        const result = await postData("conferences/delete_conference", { conferenceId: id });
+        if (!result.status) {
+          throw new Error(result.message || `Failed to delete conference ID ${id}`);
+        }
+      }
+      await fetchAllConferences();
+      table.onSelectAllRows(false, []); // Clear selected rows
+    } catch (error) {
+      console.error("Error deleting conferences:", error);
+      await fetchAllConferences();
+    }
+  };
+
+  // Filter and sort data
   const dataFiltered: ConferenceProps[] = applyFilter({
     inputData: conferenceList,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
-
-  useEffect(() => {
-    const storedData = JSON.parse(localStorage.getItem('conferences') || '[]');
-    if (storedData.length > 0) {
-      // Ensure stored data has Sno
-      const formattedStoredData = storedData.map((item: any) => ({
-        ...item,
-        Sno: item.Sno ?? String(item.id), // Fallback to id if Sno is missing
-      }));
-      setConferenceList([...conferenceData, ...formattedStoredData]);
-    } else {
-      setConferenceList(conferenceData);
-    }
-  }, []);
 
   const notFound = !dataFiltered.length && !!filterName;
 
@@ -108,7 +139,7 @@ export function ConferenceView() {
             setFilterName(event.target.value);
             table.onResetPage();
           }}
-          selectedIds={table.selected.map(Number)} // Directly use selected IDs
+          selectedIds={table.selected.map(Number)} // Use selected IDs
           onDeleteRows={handleDeleteRows} // Pass bulk delete handler
         />
 
@@ -124,15 +155,15 @@ export function ConferenceView() {
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    conferenceList.map((row) => String(row.id)) // Use id for selection
+                    conferenceList.map((row) => String(row.conferenceID))
                   )
                 }
                 headLabel={[
-                  { id: 'Sno', label: 'S. No' },
+                  { id: 'conferenceID', label: 'Conference ID' },
                   { id: 'publisher', label: 'Publisher' },
                   { id: 'conferenceName', label: 'Conference Name' },
-                  { id: 'Area_Subject', label: 'Area/Subject', align: 'center' },
-                  { id: 'Lds', label: 'Last date of Submission' },
+                  { id: 'area_subject', label: 'Area/Subject', align: 'center' },
+                  { id: 'lastDOfSub', label: 'Last Date of Submission' },
                   { id: 'registrationCharges', label: 'Registration Charges' },
                   { id: 'links', label: 'Links' },
                 ]}
@@ -145,21 +176,16 @@ export function ConferenceView() {
                   )
                   .map((row) => (
                     <ConferenceTableRow
-                      key={row.id}
+                      key={row.conferenceID}
                       row={row}
-                      selected={table.selected.includes(String(row.id))} // Use id for selection
-                      onSelectRow={() => table.onSelectRow(String(row.id))} // Use id for selection
+                      selected={table.selected.includes(String(row.conferenceID))}
+                      onSelectRow={() => table.onSelectRow(String(row.conferenceID))}
                       onEditRow={(data) => setEditData(data)}
                       onDeleteRow={(id: number) => {
-                        const updated = conferenceList.filter((item) => item.id !== id);
-                        setConferenceList(updated);
+                        fetchAllConferences();
                         table.onSelectAllRows(
                           false,
                           table.selected.filter((selectedId) => selectedId !== String(id))
-                        ); // Update selected
-                        localStorage.setItem(
-                          'conferences',
-                          JSON.stringify(updated.slice(conferenceData.length))
                         );
                       }}
                     />
@@ -205,12 +231,12 @@ export function ConferenceView() {
           data={
             editData
               ? {
-                  ...editData,
+                  conferenceId: editData.conferenceID,
                   publisher: String(editData.publisher),
                   conferenceName: String(editData.conferenceName),
                   area: String(editData.area),
                   subject: String(editData.subject),
-                  Lds: String(editData.Lds),
+                  Lds: String(editData.lastDOfSub),
                   registrationCharges: String(editData.registrationCharges),
                   links: String(editData.links),
                 }
@@ -218,29 +244,7 @@ export function ConferenceView() {
           }
           onClose={() => setEditData(null)}
           onSave={(newData) => {
-            const updatedList = conferenceList.map((item) =>
-              // use publisher because id gives error
-              item.publisher === newData.publisher
-                ? {
-                    ...item,
-                    ...newData,
-                    publisher: String(newData.publisher),
-                    conferenceName: String(newData.conferenceName),
-                    area: String(newData.area),
-                    subject: String(newData.subject),
-                    Lds: String(newData.Lds),
-                    registrationCharges: String(newData.registrationCharges),
-                    links: String(newData.links),
-                    Sno: item.Sno ?? String(item.id), // Ensure Sno is present
-                  }
-                : item
-            ) as ConferenceProps[];
-            setConferenceList(updatedList);
-            localStorage.setItem(
-              'conferences',
-              JSON.stringify(updatedList.slice(conferenceData.length))
-            );
-            setEditData(null);
+            fetchAllConferences();
           }}
           anchorPosition={{ top: 100, left: window.innerWidth / 2 }}
         />

@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { publicationData } from 'src/_mock/_all-mock-data';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { TableNoData } from 'src/sections/user/table-no-data';
@@ -16,9 +15,21 @@ import { TableEmptyRows } from 'src/sections/user/table-empty-rows';
 import { UserTableToolbar } from 'src/sections/user/user-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/user/utils';
 import { useTable } from './user-view';
-import { PublicationProps, PublicationTableRow } from '../publication-table-row';
+import { PublicationTableRow } from '../publication-table-row';
 import { PublicationTableHead } from '../publication-table-head';
 import { AddPublicationData } from '../AddNewData/add-publication-data';
+import { getData, postData } from 'src/services/FetchBackendServices';
+
+// Define the interface for publication data based on the backend publication response
+interface PublicationProps {
+  publicationId: number;
+  sourceTitle: string; // Maps to publisher
+  citeScore: number;
+  hPercentile: string; // Maps to area
+  citations: number; // Maps to subject
+  documents: number; // Maps to lastDOfSub
+  cited: number; // Maps to registrationCharges
+}
 
 // ----------------------------------------------------------------------
 
@@ -26,49 +37,73 @@ export function PublicationView() {
   const table = useTable();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [filterName, setFilterName] = useState('');
-  const [publicationList, setPublicationList] = useState<PublicationProps[]>(publicationData);
+  const [publicationList, setPublicationList] = useState<PublicationProps[]>([]);
   const [editData, setEditData] = useState<PublicationProps | null>(null);
 
-  const handleAddPublication = (newData: any) => {
-    const newId = Date.now();
-    // Convert numeric fields to strings to match PublicationProps
-    const formattedData = {
-      ...newData,
-      sourceTitle: String(newData.sourceTitle),
-      citeScore: Number(newData.citeScore),
-      hPercentile: String(newData.hPercentile),
-      citations: Number(newData.citations),
-      documents: Number(newData.documents),
-      cited: Number(newData.cited),
-      id: newId,
-    };
-    const updated = [...publicationList, formattedData];
-    setPublicationList(updated);
-    localStorage.setItem('publications', JSON.stringify(updated.slice(publicationData.length)));
-    setOpenPopover(true); // Close popover after saving
+  // Fetch all publications from the backend
+  const fetchAllPublications = async () => {
+    try {
+      const response = await getData("publications/display_all_publications");
+      if (response && response.data) {
+        // Map the response data to match the PublicationProps interface
+        const formattedData = response.data.map((item: any) => ({
+          publicationId: item.publicationId,
+          sourceTitle: String(item.sourceTitle),
+          citeScore: Number(item.citeScore),
+          hPercentile: String(item.highestPercentile),
+          citations: Number(item.citations),
+          documents: Number(item.documents),
+          cited: Number(item.cited),
+        }));
+        setPublicationList(formattedData);
+      } else {
+        console.error("No data received from the backend");
+        setPublicationList([]);
+      }
+    } catch (error) {
+      console.error("Error fetching publications:", error);
+      setPublicationList([]);
+    }
   };
 
-  const handleDeleteRows = (ids: number[]) => {
-    const updated = publicationList.filter((item) => !ids.includes(item.id));
-    setPublicationList(updated);
-    table.onSelectAllRows(false, []); // Clear selected rows
-    localStorage.setItem('publications', JSON.stringify(updated.slice(publicationData.length)));
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchAllPublications();
+  }, []);
+
+  // Handle adding or updating a publication
+  const handleAddPublication = async (newData: any) => {
+    try {
+      await fetchAllPublications();
+    } catch (error) {
+      console.error("Error after adding/updating publication:", error);
+      await fetchAllPublications(); // Refetch to ensure consistency
+    }
   };
 
+  // Handle deleting rows (bulk deletion)
+  const handleDeleteRows = async (ids: number[]) => {
+    try {
+      for (const id of ids) {
+        const result = await postData("publications/delete_publication", { publicationId: id });
+        if (!result.status) {
+          throw new Error(result.message || `Failed to delete publication ID ${id}`);
+        }
+      }
+      await fetchAllPublications();
+      table.onSelectAllRows(false, []); // Clear selected rows
+    } catch (error) {
+      console.error("Error deleting publications:", error);
+      await fetchAllPublications();
+    }
+  };
+
+  // Filter and sort data
   const dataFiltered: PublicationProps[] = applyFilter({
     inputData: publicationList,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
-
-  useEffect(() => {
-    const storedData = JSON.parse(localStorage.getItem('publications') || '[]');
-    if (storedData.length > 0) {
-      setPublicationList([...publicationData, ...storedData]);
-    } else {
-      setPublicationList(publicationData);
-    }
-  }, []);
 
   const notFound = !dataFiltered.length && !!filterName;
 
@@ -102,10 +137,7 @@ export function PublicationView() {
             setFilterName(event.target.value);
             table.onResetPage();
           }}
-          selectedIds={table.selected.map(
-            (sourceTitle) =>
-              publicationList.find((item) => item.sourceTitle === sourceTitle)?.id
-          ).filter((id): id is number => typeof id === 'number')} // Pass selected row IDs as numbers
+          selectedIds={table.selected.map(Number)} // Use selected IDs
           onDeleteRows={handleDeleteRows} // Pass bulk delete handler
         />
 
@@ -121,15 +153,16 @@ export function PublicationView() {
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    publicationList.map((user) => String(user.sourceTitle))
+                    publicationList.map((row) => String(row.publicationId))
                   )
                 }
                 headLabel={[
-                  { id: 'sourceT', label: 'Source Title' },
+                  { id: 'id', label: 'Publication ID' },
+                  { id: 'sourceTitle', label: 'Source Title' },
                   { id: 'citeScore', label: 'Cite Score' },
-                  { id: 'hPercentile', label: 'Highest Percentile' },
-                  { id: 'citations', label: 'Citations 2024-25', align: 'center' },
-                  { id: 'documents', label: 'Documents 2024-25' },
+                  { id: 'hPercentile', label: 'Highest Percentile', align: 'center' },
+                  { id: 'citations', label: 'Citations' },
+                  { id: 'documents', label: 'Documents' },
                   { id: 'cited', label: 'Cited' },
                 ]}
               />
@@ -141,21 +174,16 @@ export function PublicationView() {
                   )
                   .map((row) => (
                     <PublicationTableRow
-                      key={row.id}
+                      key={row.publicationId}
                       row={row}
-                      selected={table.selected.includes(row.sourceTitle)} // Use ID instead of sourceTitle
-                      onSelectRow={() => table.onSelectRow(row.sourceTitle)} // Use ID instead of sourceTitle
+                      selected={table.selected.includes(String(row.publicationId))}
+                      onSelectRow={() => table.onSelectRow(String(row.publicationId))}
                       onEditRow={(data) => setEditData(data)}
-                      onDeleteRow={(id:number) => {
-                        const updated = publicationList.filter((item) => item.id !== id);
-                        setPublicationList(updated);
+                      onDeleteRow={(id: number) => {
+                        fetchAllPublications();
                         table.onSelectAllRows(
                           false,
                           table.selected.filter((selectedId) => selectedId !== String(id))
-                        ); // Update selected
-                        localStorage.setItem(
-                          'publications',
-                          JSON.stringify(updated.slice(publicationData.length))
                         );
                       }}
                     />
@@ -201,38 +229,18 @@ export function PublicationView() {
           data={
             editData
               ? {
-                  ...editData,
-                  status: (editData as any).status ?? "",
-                  isFeatured: (editData as any).isFeatured ?? false,
-                  citeScore: Number(editData.citeScore),
+                  publicationId: editData.publicationId,
+                  sourceTitle: String(editData.sourceTitle),
+                  citeScore: String(editData.citeScore),
                   hPercentile: String(editData.hPercentile),
-                  citations: Number(editData.citations),
-                  documents: Number(editData.documents),
-                  cited: Number(editData.cited),
+                  citations: String(editData.citations),
+                  documents: String(editData.documents),
+                  cited: String(editData.cited),
                 }
               : null
           }
           onClose={() => setEditData(null)}
-          onSave={(newData) => {
-            const updatedList = publicationList.map((item) =>
-              item.id === newData.id
-                ? {
-                    ...newData,
-                    citeScore: String(newData.citeScore),
-                    hPercentile: String(newData.hPercentile),
-                    citations: String(newData.citations),
-                    documents: String(newData.documents),
-                    cited: String(newData.cited),
-                  }
-                : item
-            );
-            setPublicationList(updatedList);
-            localStorage.setItem(
-              'publications',
-              JSON.stringify(updatedList.slice(publicationData.length))
-            );
-            setEditData(null);
-          }}
+          onSave={handleAddPublication}
           anchorPosition={{ top: 100, left: window.innerWidth / 2 }}
         />
       )}
