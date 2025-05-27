@@ -54,7 +54,7 @@ export const  navData = [
   },
   {
     title: 'Sign in',
-    path: '/sign-in',
+    path: '/sign-up',
     icon: LiaSignInAltSolid,
   },
   {

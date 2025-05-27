@@ -18,6 +18,7 @@ export const UserPage = lazy(() => import('src/pages/user'));
 export const ConferencePage = lazy(() => import('src/pages/conference'));
 export const PublicationPage = lazy(() => import('src/pages/publication'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
+export const SignUpPage = lazy(() => import('src/pages/sign-up'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
 
@@ -61,10 +62,10 @@ export const routesSection: RouteObject[] = [
     ],
   },
   {
-    path: 'sign-in',
+    path: 'sign-up',
     element: (
       <AuthLayout>
-        <SignInPage />
+        <SignUpPage />
       </AuthLayout>
     ),
   },
