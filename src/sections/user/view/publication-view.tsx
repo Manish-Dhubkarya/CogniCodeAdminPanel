@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
@@ -7,18 +8,23 @@ import TableBody from '@mui/material/TableBody';
 import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
+
 import { DashboardContent } from 'src/layouts/dashboard';
+import { getData, postData } from 'src/services/FetchBackendServices';
+
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
+
 import { TableNoData } from 'src/sections/user/table-no-data';
 import { TableEmptyRows } from 'src/sections/user/table-empty-rows';
 import { UserTableToolbar } from 'src/sections/user/user-table-toolbar';
 import { emptyRows, applyFilter, getComparator } from 'src/sections/user/utils';
+
 import { useTable } from './user-view';
 import { PublicationTableRow } from '../publication-table-row';
 import { PublicationTableHead } from '../publication-table-head';
 import { AddPublicationData } from '../AddNewData/add-publication-data';
-import { getData, postData } from 'src/services/FetchBackendServices';
+
 
 // Define the interface for publication data based on the backend publication response
 interface PublicationProps {

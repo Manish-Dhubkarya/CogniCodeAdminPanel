@@ -1,16 +1,18 @@
 import { useState, useCallback } from 'react';
+
+import { FaRegCheckCircle } from 'react-icons/fa';
+import { styled } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
+import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
+import Button from '@mui/material/Button';
+import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
-import Popover from '@mui/material/Popover';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
-import { styled } from '@mui/material';
-import { FaRegCheckCircle } from 'react-icons/fa';
+
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------

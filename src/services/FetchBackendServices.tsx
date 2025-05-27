@@ -1,9 +1,10 @@
 import axios from "axios";
+
 const serverURL = "http://localhost:4000"
 const postData = async (url:any, body:any) => {
     try {
-        var response = await axios.post(`${serverURL}/${url}`, body)
-        var data = response.data
+        const response = await axios.post(`${serverURL}/${url}`, body)
+        const data = response.data
         return data
     }
     catch(e) {
@@ -12,8 +13,8 @@ const postData = async (url:any, body:any) => {
 }
 const getData = async (url:any) => {
     try {
-        var response = await axios.get(`${serverURL}/${url}`)
-        var data = response.data
+        const response = await axios.get(`${serverURL}/${url}`)
+        const data = response.data
         return data
     }
     catch(e) {

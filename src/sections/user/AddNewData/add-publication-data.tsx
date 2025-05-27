@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaRegCheckCircle, FaExclamationCircle } from "react-icons/fa";
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { postData } from 'src/services/FetchBackendServices';
 import {
     Popover,
     Box,
@@ -14,6 +10,8 @@ import {
     Backdrop,
     CircularProgress,
 } from '@mui/material';
+import { postData } from 'src/services/FetchBackendServices';
+
 import { styled } from '@mui/material/styles';
 import dayjs from 'dayjs';
 

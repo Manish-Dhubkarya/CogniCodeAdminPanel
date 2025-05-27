@@ -1,5 +1,6 @@
-import { Label } from 'src/components/label';
 import { GiProgression } from "react-icons/gi";
+
+import { Label } from 'src/components/label';
 import { FaUsers } from "react-icons/fa";
 import { GiVideoConference } from "react-icons/gi";
 import { GiPublicSpeaker } from "react-icons/gi";

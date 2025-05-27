@@ -1,5 +1,3 @@
-import { ConferenceProps } from './conference-table-row';
-import type { UserProps } from './user-table-row';
 
 // ----------------------------------------------------------------------
 
