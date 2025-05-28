@@ -8,13 +8,14 @@ import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
-import { CircularProgress, Popover, Stack } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { CircularProgress, Drawer, Popover, Stack } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { FaExclamationCircle, FaRegCheckCircle } from 'react-icons/fa';
 import { useRouter } from 'src/routes/hooks';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { Iconify } from 'src/components/iconify';
 import { postData } from 'src/services/FetchBackendServices';
-import { SignInView } from './sign-in-view';
 
 // Styled component for the file input
 const VisuallyHiddenInput = styled('input')({
@@ -61,7 +62,22 @@ const ErrorPopoverPaper = styled('div')({
   alignItems: 'center',
   color: '#D32F2F',
 });
+const DrawerPaper = styled('div')({
+  width: '100vw',
+  maxWidth: '600px',
+  height: '100%',
+  padding: '24px',
+  background: 'rgba(255, 255, 255, 0.8)',
+  backdropFilter: 'blur(10px)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+});
 
+interface SignUpViewProps {
+  open?: boolean;
+  onClose?: () => void;
+}
 // Admin Form Data Interface
 export interface AdminFormData {
   adminName: string;
@@ -79,7 +95,7 @@ const initialFormData: AdminFormData = {
   adminPassword: '',
 };
 
-export function SignUpView() {
+export function SignUpView({ open, onClose }: SignUpViewProps) {
   const router = useRouter();
   const [formData, setFormData] = useState<AdminFormData>(initialFormData);
   const [showPassword, setShowPassword] = useState(false);
@@ -207,16 +223,6 @@ export function SignUpView() {
     }
   }, [formData, router]);
 
-  // Handle Sign In link click
-  const handleSignInClick = () => {
-    setOpenSignIn(true);
-  };
-
-  // Handle Sign In panel close
-  const handleSignInClose = () => {
-    setOpenSignIn(false);
-  };
-
   const renderForm = (
     <Box
       sx={{
@@ -336,28 +342,33 @@ export function SignUpView() {
   );
 
   return (
-    <>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        component: DrawerPaper,
+        sx: { zIndex: 1300 },
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <AdminPanelSettingsIcon sx={{ fontSize: 30, color: 'success.main' }} />
+        <Typography variant="h5">Admin Sign Up</Typography>
+        </Box>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
       <Box
         sx={{
           gap: 1.5,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          mb: 5,
         }}
       >
-        <Typography variant="h5">Admin Sign In</Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: 'text.secondary',
-          }}
-        >
-          Already have an account?{' '}
-          <Link variant="subtitle2" sx={{ ml: 0.5, cursor: 'pointer' }} onClick={handleSignInClick}>
-            Sign in
-          </Link>
-        </Typography>
+        
       </Box>
       {renderForm}
       <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
@@ -390,7 +401,7 @@ export function SignUpView() {
         open={showConfirmPopup}
         onClose={() => setShowConfirmPopup(false)}
         anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
+        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
         transformOrigin={{ vertical: 'center', horizontal: 'center' }}
         PaperProps={{
           component: ConfirmationPopoverPaper,
@@ -423,7 +434,7 @@ export function SignUpView() {
       <Popover
         open={showLoader}
         anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
+        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
         transformOrigin={{ vertical: 'center', horizontal: 'center' }}
         PaperProps={{
           sx: {
@@ -445,7 +456,7 @@ export function SignUpView() {
         open={showSuccessMessage}
         onClose={() => {}} // Disable manual closing; handled by timer
         anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
+        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
         transformOrigin={{ vertical: 'center', horizontal: 'center' }}
         PaperProps={{
           component: SuccessPopoverPaper,
@@ -472,7 +483,7 @@ export function SignUpView() {
         open={showErrorMessage}
         onClose={() => {}} // Disable manual closing; handled by timer
         anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
+        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
         transformOrigin={{ vertical: 'center', horizontal: 'center' }}
         PaperProps={{
           component: ErrorPopoverPaper,
@@ -494,8 +505,6 @@ export function SignUpView() {
           {errorPopupMessage || 'Failed to save data'}
         </Typography>
       </Popover>
-      {/* Sign In Drawer */}
-      <SignInView open={openSignIn} onClose={handleSignInClose} />
-    </>
+    </Drawer>
   );
 }

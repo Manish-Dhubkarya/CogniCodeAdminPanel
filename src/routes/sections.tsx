@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router';
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { varAlpha } from 'minimal-shared/utils';
 
@@ -42,9 +42,11 @@ const renderFallback = () => (
   </Box>
 );
 
+
+
 export const routesSection: RouteObject[] = [
-  {
-    element: (
+  {  
+    element: ( 
       <DashboardLayout>
         <Suspense fallback={renderFallback()}>
           <Outlet />
@@ -62,10 +64,10 @@ export const routesSection: RouteObject[] = [
     ],
   },
   {
-    path: 'sign-up',
+    path: 'sign-in',
     element: (
       <AuthLayout>
-        <SignUpPage />
+        <SignInPage />
       </AuthLayout>
     ),
   },

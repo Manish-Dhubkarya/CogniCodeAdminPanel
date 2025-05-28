@@ -1,10 +1,27 @@
+import { Box, LinearProgress, linearProgressClasses } from '@mui/material';
+import { varAlpha } from 'minimal-shared/utils';
+import { useEffect, useState } from 'react';
 import { CONFIG } from 'src/config-global';
+import { useRouter } from 'src/routes/hooks';
 
 import { OverviewAnalyticsView as DashboardView } from 'src/sections/overview/view';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
+
+  
+ const isAuth = localStorage.getItem('auth_user');
+
+useEffect(() => {
+  if (!isAuth) {
+    window.location.href = '/sign-in';
+  } 
+}, []);
+
+
+
+
   return (
     <>
       <title>{`${CONFIG.appName}`}</title>

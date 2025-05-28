@@ -54,12 +54,12 @@ export const  navData = [
   },
   {
     title: 'Sign in',
-    path: '/sign-up',
+    path: '/sign-in',
     icon: LiaSignInAltSolid,
   },
-  {
-    title: 'Not found',
-    path: '/404',
-    icon: LuCloudOff,
-  },
+  // {
+  //   title: 'Not found',
+  //   path: '/404',
+  //   icon: LuCloudOff,
+  // },
 ];
