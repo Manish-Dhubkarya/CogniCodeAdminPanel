@@ -12,7 +12,7 @@ export const _workspaces: WorkspacesPopoverProps['data'] = [
   {
     id: 'team-1',
     name: 'Team 1',
-    plan: 'Free',
+    plan: 'Premium',
     logo: '/assets/icons/workspaces/logo-2.webp',
   },
   {

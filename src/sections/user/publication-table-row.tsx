@@ -8,10 +8,9 @@ import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { FaRegCheckCircle } from 'react-icons/fa';
-
 import { Iconify } from 'src/components/iconify';
-import { Button, CircularProgress, Stack, styled, Typography } from '@mui/material';
-import { postData } from 'src/services/FetchBackendServices'; // Import the postData service
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Box, Typography, styled } from '@mui/material';
+import { postData } from 'src/services/FetchBackendServices';
 
 // ----------------------------------------------------------------------
 
@@ -41,17 +40,9 @@ export function PublicationTableRow({
   onDeleteRow,
 }: PublicationTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false); // Changed to Dialog
   const [showLoader, setShowLoader] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
-  const ConfirmationPopoverPaper = styled('div')({
-    padding: 2,
-    background: '#FFFFFF',
-    borderRadius: 2,
-    boxShadow: '0px 5px 15px rgba(0,0,0,0.2)',
-    width: '300px',
-  });
 
   const SuccessPopoverPaper = styled('div')({
     padding: 16,
@@ -80,24 +71,24 @@ export function PublicationTableRow({
 
   const handleDelete = (event: React.MouseEvent<HTMLLIElement>) => {
     event.stopPropagation(); // Prevent parent Popover from closing
-    setShowConfirmPopup(true);
+    setShowConfirmDialog(true); // Open the confirmation dialog
     setOpenPopover(null); // Close the menu popover
   };
 
   const handleCancelConfirm = () => {
-    setShowConfirmPopup(false);
+    setShowConfirmDialog(false);
   };
 
   const handleConfirmDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation(); // Prevent any unexpected event bubbling
-    setShowConfirmPopup(false); // Close confirmation popup
+    setShowConfirmDialog(false); // Close confirmation dialog
     setShowLoader(true); // Show loader
 
     try {
       // Make a DELETE request to the backend using postData
       const result = await postData("publications/delete_publication", { publicationId: row.publicationId });
 
-      // Simulate loader for at least 1 second for better UX
+      // Ensure loader is visible for at least 1 second for better UX
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       if (result.status) {
@@ -105,9 +96,10 @@ export function PublicationTableRow({
         onDeleteRow(row.publicationId); // Notify parent to refetch data
         setShowSuccessMessage(true); // Show success message
 
+        // Hide success message after 1.5 seconds (1500ms)
         setTimeout(() => {
-          setShowSuccessMessage(false); // Hide success message after 3 seconds
-        }, 3000);
+          setShowSuccessMessage(false);
+        }, 1500);
       } else {
         throw new Error(result.message || 'Failed to delete publication');
       }
@@ -176,90 +168,75 @@ export function PublicationTableRow({
         </MenuList>
       </Popover>
 
-      {/* Confirmation Popover */}
-      <Popover
-        open={showConfirmPopup}
-        onClose={() => setShowConfirmPopup(false)}
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: ConfirmationPopoverPaper,
-          sx: { zIndex: 1400 },
-        }}
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelConfirm}
+        aria-labelledby="delete-confirm-dialog-title"
+        aria-describedby="delete-confirm-dialog-description"
       >
-        <Typography variant="body1" sx={{ mb: 0, p: 1 }}>
-          Are you sure you want to delete this publication?
-        </Typography>
-        <Stack direction="row" spacing={2} padding={1} justifyContent="flex-end">
-          <Button
-            onClick={handleCancelConfirm}
-            variant="outlined"
-            color="secondary"
-            sx={{ borderRadius: 8, padding: '4px 12px' }}
-          >
+        <DialogTitle id="delete-confirm-dialog-title">Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-confirm-dialog-description">
+            Are you sure you want to delete this publication?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelConfirm} color="primary">
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            variant="contained"
-            color="error"
-            sx={{ borderRadius: 8, padding: '4px 12px' }}
-          >
+          <Button onClick={handleConfirmDelete} color="error" autoFocus>
             Confirm
           </Button>
-        </Stack>
-      </Popover>
+        </DialogActions>
+      </Dialog>
 
-      {/* Loader Popover */}
-      <Popover
-        open={showLoader}
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          sx: {
-            zIndex: 1500,
-            background: 'rgba(255, 255, 255, 0.8)',
-            borderRadius: 8,
-            padding: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-          },
+      {/* Loader Overlay */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: showLoader ? 'flex' : 'none',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.8)',
+          zIndex: 1500,
         }}
       >
         <CircularProgress color="primary" size={40} />
-      </Popover>
+      </Box>
 
-      {/* Delete Success Message Popover */}
-      <Popover
-        open={showSuccessMessage}
-        onClose={() => {}} // Disable manual closing; handled by timer
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: SuccessPopoverPaper,
-          sx: { zIndex: 1500 },
+      {/* Delete Success Message Overlay */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: showSuccessMessage ? 'block' : 'none',
+          zIndex: 1500,
         }}
       >
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 'bold',
-            color: '#1dd714',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <FaRegCheckCircle style={{ marginRight: 5 }} />
-          Data deleted successfully
-        </Typography>
-      </Popover>
+        <SuccessPopoverPaper>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 'bold',
+              color: '#1dd714',
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <FaRegCheckCircle style={{ marginRight: 5 }} />
+            Data deleted successfully
+          </Typography>
+        </SuccessPopoverPaper>
+      </Box>
     </>
   );
 }

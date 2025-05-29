@@ -9,6 +9,7 @@ import { FaBlog } from "react-icons/fa";
 import { LiaSignInAltSolid } from "react-icons/lia";
 import { LuCloudOff } from "react-icons/lu";
 
+
 export type NavItem = {
   title: string;
   path: string;
@@ -53,8 +54,8 @@ export const  navData = [
     icon: FaBlog,
   },
   {
-    title: 'Sign in',
-    path: '/sign-in',
+    title: 'Logout',
+    path: '/logout',
     icon: LiaSignInAltSolid,
   },
   // {

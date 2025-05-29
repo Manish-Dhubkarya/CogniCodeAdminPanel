@@ -14,6 +14,11 @@ import {
     Stack,
     Backdrop,
     CircularProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import dayjs from 'dayjs';
@@ -399,40 +404,28 @@ export const AddConferenceData: React.FC<ConferenceEditorPopoverProps> = ({
                 </Popover>
 
                 {/* Confirmation Popover */}
-                <Popover
-                    onClick={(e) => e.stopPropagation()}
-                    open={showConfirmPopup}
-                    onClose={() => setShowConfirmPopup(false)}
-                    anchorReference="anchorPosition"
-                    anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-                    transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-                    PaperProps={{
-                        component: ConfirmationPopoverPaper,
-                        sx: { zIndex: 1400 },
-                    }}
-                >
-                    <Typography variant="body1" sx={{ mb: 0, p: 1 }}>
-                        Are you sure you want to save the changes?
-                    </Typography>
-                    <Stack direction="row" spacing={2} padding={1} justifyContent="flex-end">
-                        <Button
-                            onClick={handleCancelConfirm}
-                            variant="outlined"
-                            color="secondary"
-                            sx={{ borderRadius: 8, padding: '4px 12px' }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleConfirmSave}
-                            variant="contained"
-                            color="primary"
-                            sx={{ borderRadius: 8, padding: '4px 12px' }}
-                        >
-                            Save
-                        </Button>
-                    </Stack>
-                </Popover>
+                 <Dialog
+        open={showConfirmPopup}
+        onClick={(e) => e.stopPropagation()}
+        onClose={() => setShowConfirmPopup(false)}
+        aria-labelledby="delete-confirm-dialog-title"
+        aria-describedby="delete-confirm-dialog-description"
+      >
+        <DialogTitle id="delete-confirm-dialog-title">Confirm Save</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-confirm-dialog-description">
+Are you sure you want to save the changes?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelConfirm} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmSave} color="error" autoFocus>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
 
                 {/* Loader Popover */}
                 <Popover

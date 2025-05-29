@@ -9,6 +9,11 @@ import MenuList from '@mui/material/MenuList';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import { useRouter, usePathname } from 'src/routes/hooks';
 import { useAuth } from 'src/sections/auth/auth'; // Ensure this points to auth.tsx
 import { serverURL } from 'src/services/FetchBackendServices';
@@ -27,6 +32,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
   const pathname = usePathname();
   const { user, setUser } = useAuth();
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
+  const [openDialog, setOpenDialog] = useState(false); // State for the confirmation dialog
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setOpenPopover(event.currentTarget);
@@ -49,11 +55,19 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
     router.push('/sign-in');
   }, [handleClosePopover, router]);
 
-  const handleLogout = useCallback(() => {
-    handleClosePopover();
+  const handleLogoutRequest = useCallback(() => {
+    setOpenDialog(true); // Open the confirmation dialog
+  }, [handleClosePopover]);
+
+  const handleLogoutConfirm = useCallback(() => {
+    setOpenDialog(false); // Close the dialog
     setUser(null); // Clear user from context and localStorage
-    router.push('/sign-in');
-  }, [handleClosePopover, router, setUser]);
+    router.push('/sign-in'); // Redirect to sign-in
+  }, [router, setUser]);
+
+  const handleLogoutCancel = useCallback(() => {
+    setOpenDialog(false); // Close the dialog without logging out
+  }, []);
 
   return (
     <>
@@ -70,7 +84,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         {...other}
       >
         <Avatar
-          src={user?.photoURL ? `${serverURL}/images/${user.photoURL}`:undefined}
+          src={user?.photoURL ? `${serverURL}/images/${user.photoURL}` : undefined}
           alt={user?.displayName || 'User'}
           sx={{ width: 1, height: 1 }}
         >
@@ -149,7 +163,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
                 color="error"
                 size="medium"
                 variant="text"
-                onClick={handleLogout}
+                onClick={handleLogoutRequest} // Show confirmation dialog instead of immediate logout
               >
                 Logout
               </Button>
@@ -173,6 +187,29 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
           </Box>
         )}
       </Popover>
+
+      {/* Confirmation Dialog for Logout */}
+      <Dialog
+        open={openDialog}
+        onClose={handleLogoutCancel}
+        aria-labelledby="logout-confirm-dialog-title"
+        aria-describedby="logout-confirm-dialog-description"
+      >
+        <DialogTitle id="logout-confirm-dialog-title">Confirm Logout</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-confirm-dialog-description">
+            Are you sure you want to log out?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleLogoutCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleLogoutConfirm} color="error" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

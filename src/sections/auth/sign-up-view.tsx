@@ -9,7 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
 import CloseIcon from '@mui/icons-material/Close';
-import { CircularProgress, Drawer, Popover, Stack } from '@mui/material';
+import { CircularProgress, Drawer, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { FaExclamationCircle, FaRegCheckCircle } from 'react-icons/fa';
 import { useRouter } from 'src/routes/hooks';
@@ -30,15 +30,7 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-// Styled Popovers
-const ConfirmationPopoverPaper = styled('div')({
-  padding: 2,
-  background: '#FFFFFF',
-  borderRadius: 2,
-  boxShadow: '0px 5px 15px rgba(0,0,0,0.2)',
-  width: '300px',
-});
-
+// Styled Popovers for Success and Error Messages
 const SuccessPopoverPaper = styled('div')({
   padding: 16,
   background: '#FFFFFF',
@@ -62,6 +54,7 @@ const ErrorPopoverPaper = styled('div')({
   alignItems: 'center',
   color: '#D32F2F',
 });
+
 const DrawerPaper = styled('div')({
   width: '100vw',
   maxWidth: '600px',
@@ -78,6 +71,7 @@ interface SignUpViewProps {
   open?: boolean;
   onClose?: () => void;
 }
+
 // Admin Form Data Interface
 export interface AdminFormData {
   adminName: string;
@@ -101,13 +95,12 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(false);
   const [errorPopupMessage, setErrorPopupMessage] = useState<string>('');
   const [errors, setErrors] = useState<Partial<Record<keyof AdminFormData, string>>>({});
-  const [openSignIn, setOpenSignIn] = useState(false); // State for Sign In panel
 
   // Handle input changes
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,6 +125,13 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Handle removing the uploaded image
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setFormData((prev) => ({ ...prev, adminPic: null }));
   };
 
   // Validate form data
@@ -169,18 +169,18 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
   // Handle form submission
   const handleSubmit = useCallback(() => {
     if (validateForm()) {
-      setShowConfirmPopup(true);
+      setShowConfirmDialog(true);
     }
   }, [formData]);
 
   // Handle confirmation cancel
   const handleCancelConfirm = () => {
-    setShowConfirmPopup(false);
+    setShowConfirmDialog(false);
   };
 
   // Handle confirmation save
   const handleConfirmSave = useCallback(async () => {
-    setShowConfirmPopup(false);
+    setShowConfirmDialog(false);
     setShowLoader(true);
 
     try {
@@ -275,7 +275,7 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
           inputLabel: { shrink: true },
         }}
       />
-      <Box sx={{ mb: 3, display: 'flex', gap: 7, alignItems: 'center', flexDirection: 'row', width: '100%' }}>
+      <Box sx={{ mb: 3, display: 'flex', gap: 10, alignItems: 'center', flexDirection: 'row', width: '100%' }}>
         <Button
           component="label"
           variant="outlined"
@@ -290,15 +290,28 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
           />
         </Button>
         {selectedFile && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative' }}>
             {previewUrl && (
               <Box
                 component="img"
                 src={previewUrl}
                 alt="Preview"
-                sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1 }}
+                sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }}
               />
             )}
+            <IconButton
+              size="small"
+              onClick={handleRemoveImage}
+              sx={{
+                position: 'absolute',
+                top: -15,
+                right: -15,
+                bgcolor: 'background.paper',
+                '&:hover': { bgcolor: 'background.default' },
+              }}
+            >
+              <CloseIcon color='error' fontSize="small" />
+            </IconButton>
           </Box>
         )}
       </Box>
@@ -309,6 +322,7 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
         fullWidth
         name="adminPassword"
         size="small"
+        value={formData.adminPassword} // Added value prop to ensure controlled input
         onChange={handleInputChange}
         error={!!errors.adminPassword}
         helperText={errors.adminPassword}
@@ -353,8 +367,8 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AdminPanelSettingsIcon sx={{ fontSize: 30, color: 'success.main' }} />
-        <Typography variant="h5">Admin Sign Up</Typography>
+          <AdminPanelSettingsIcon sx={{ fontSize: 30, color: 'success.main' }} />
+          <Typography variant="h5">Admin Sign up</Typography>
         </Box>
         <IconButton onClick={onClose}>
           <CloseIcon />
@@ -367,9 +381,7 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
           flexDirection: 'column',
           alignItems: 'center',
         }}
-      >
-        
-      </Box>
+      />
       {renderForm}
       <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
         <Typography
@@ -396,115 +408,105 @@ export function SignUpView({ open, onClose }: SignUpViewProps) {
           <Iconify width={22} icon="socials:twitter" />
         </IconButton>
       </Box>
-      {/* Confirmation Popover */}
-      <Popover
-        open={showConfirmPopup}
-        onClose={() => setShowConfirmPopup(false)}
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: ConfirmationPopoverPaper,
-          sx: { zIndex: 1400 },
-        }}
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelConfirm}
+        aria-labelledby="signup-confirm-dialog-title"
+        aria-describedby="signup-confirm-dialog-description"
       >
-        <Typography variant="body1" sx={{ mb: 0, p: 1 }}>
-          Are you sure you want to save the changes?
-        </Typography>
-        <Stack direction="row" spacing={2} padding={1} justifyContent="flex-end">
-          <Button
-            onClick={handleCancelConfirm}
-            variant="outlined"
-            color="secondary"
-            sx={{ borderRadius: 8, padding: '4px 12px' }}
-          >
+        <DialogTitle id="signup-confirm-dialog-title">Confirm Submission</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="signup-confirm-dialog-description">
+            Are you sure you want to save the changes?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelConfirm} color="primary">
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmSave}
-            variant="contained"
-            color="primary"
-            sx={{ borderRadius: 8, padding: '4px 12px' }}
-          >
-            Save
+          <Button onClick={handleConfirmSave} color="error" autoFocus>
+            Confirm
           </Button>
-        </Stack>
-      </Popover>
+        </DialogActions>
+      </Dialog>
+
       {/* Loader Popover */}
-      <Popover
-        open={showLoader}
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          sx: {
-            zIndex: 1500,
-            background: 'rgba(255, 255, 255, 0.8)',
-            borderRadius: 8,
-            padding: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-          },
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: showLoader ? 'flex' : 'none',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.8)',
+          zIndex: 1500,
         }}
       >
         <CircularProgress color="primary" size={40} />
-      </Popover>
+      </Box>
+
       {/* Success Message Popover */}
-      <Popover
-        open={showSuccessMessage}
-        onClose={() => {}} // Disable manual closing; handled by timer
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: SuccessPopoverPaper,
-          sx: { zIndex: 1500 },
+      <Box
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: showSuccessMessage ? 'block' : 'none',
+          zIndex: 1500,
         }}
       >
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 'bold',
-            color: '#4CAF50',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <FaRegCheckCircle style={{ marginRight: 5 }} />
-          Admin added successfully
-        </Typography>
-      </Popover>
+        <SuccessPopoverPaper>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 'bold',
+              color: '#4CAF50',
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <FaRegCheckCircle style={{ marginRight: 5 }} />
+            Admin added successfully
+          </Typography>
+        </SuccessPopoverPaper>
+      </Box>
+
       {/* Error Message Popover */}
-      <Popover
-        open={showErrorMessage}
-        onClose={() => {}} // Disable manual closing; handled by timer
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 1.25 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: ErrorPopoverPaper,
-          sx: { zIndex: 1500 },
+      <Box
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: showErrorMessage ? 'block' : 'none',
+          zIndex: 1500,
         }}
       >
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 'bold',
-            color: '#D32F2F',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <FaExclamationCircle style={{ marginRight: 5 }} />
-          {errorPopupMessage || 'Failed to save data'}
-        </Typography>
-      </Popover>
+        <ErrorPopoverPaper>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 'bold',
+              color: '#D32F2F',
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <FaExclamationCircle style={{ marginRight: 5 }} />
+            {errorPopupMessage || 'Failed to save data'}
+          </Typography>
+        </ErrorPopoverPaper>
+      </Box>
     </Drawer>
   );
 }

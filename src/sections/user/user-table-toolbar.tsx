@@ -3,7 +3,6 @@ import { useState, useCallback } from 'react';
 import { FaRegCheckCircle } from 'react-icons/fa';
 import { styled } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
-import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover';
@@ -12,6 +11,12 @@ import IconButton from '@mui/material/IconButton';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Box from '@mui/material/Box';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -32,17 +37,9 @@ export function UserTableToolbar({
   selectedIds,
   onDeleteRows,
 }: UserTableToolbarProps) {
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false); // Changed to Dialog
   const [showLoader, setShowLoader] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
-  const ConfirmationPopoverPaper = styled('div')({
-    padding: 2,
-    background: '#FFFFFF',
-    borderRadius: 2,
-    boxShadow: '0px 5px 15px rgba(0,0,0,0.2)',
-    width: '300px',
-  });
 
   const SuccessPopoverPaper = styled('div')({
     padding: 16,
@@ -56,30 +53,29 @@ export function UserTableToolbar({
     color: '#4CAF50',
   });
 
- const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-        event.stopPropagation(); // Prevent parent Popover from closing
-        setShowConfirmPopup(true);
-    };
-
+  const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation(); // Prevent any unexpected event bubbling
+    setShowConfirmDialog(true);
+  };
 
   const handleCancelConfirm = useCallback(() => {
-    setShowConfirmPopup(false);
+    setShowConfirmDialog(false);
   }, []);
 
   const handleConfirmDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    setShowConfirmPopup(true);
-    setShowLoader(true);
+    setShowConfirmDialog(false); // Close the dialog
+    setShowLoader(true); // Show loader
+
     setTimeout(() => {
-      setShowLoader(false);
-      setShowConfirmPopup(false);
-      
-      setShowSuccessMessage(true);
+      setShowLoader(false); // Hide loader
+      setShowSuccessMessage(true); // Show success message
+
       setTimeout(() => {
-        onDeleteRows(selectedIds);
-        setShowSuccessMessage(false);
-      }, 3000); // Show success message for 3 seconds
-    }, 5000); // Show loader for 5 seconds
+        onDeleteRows(selectedIds); // Notify parent to delete rows
+        setShowSuccessMessage(false); // Hide success message
+      }, 1500); // Show success message for 1.5 seconds
+    }, 1000); // Show loader for 1 second (reduced from 5 seconds for better UX)
   };
 
   return (
@@ -130,90 +126,75 @@ export function UserTableToolbar({
         )}
       </Toolbar>
 
-      {/* Confirmation Popover */}
-      <Popover
-        open={showConfirmPopup}
-        onClose={() => setShowConfirmPopup(false)}
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: ConfirmationPopoverPaper,
-          sx: { zIndex: 1400 },
-        }}
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelConfirm}
+        aria-labelledby="delete-confirm-dialog-title"
+        aria-describedby="delete-confirm-dialog-description"
       >
-        <Typography variant="body1" sx={{ mb: 0, p: 1 }}>
-          Are you sure you want to delete {numSelected} selected item{numSelected > 1 ? 's' : ''}?
-        </Typography>
-        <Stack direction="row" spacing={2} padding={1} justifyContent="flex-end">
-          <Button
-            onClick={handleCancelConfirm}
-            variant="outlined"
-            color="secondary"
-            sx={{ borderRadius: 8, padding: '4px 12px' }}
-          >
+        <DialogTitle id="delete-confirm-dialog-title">Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-confirm-dialog-description">
+            Are you sure you want to delete {numSelected} selected item{numSelected > 1 ? 's' : ''}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelConfirm} color="primary">
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            variant="contained"
-            color="error"
-            sx={{ borderRadius: 8, padding: '4px 12px' }}
-          >
+          <Button onClick={handleConfirmDelete} color="error" autoFocus>
             Delete
           </Button>
-        </Stack>
-      </Popover>
+        </DialogActions>
+      </Dialog>
 
-      {/* Loader Popover */}
-      <Popover
-        open={showLoader}
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          sx: {
-            zIndex: 1500,
-            background: 'rgba(255, 255, 255, 0.8)',
-            borderRadius: 8,
-            padding: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-          },
+      {/* Loader Overlay */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: showLoader ? 'flex' : 'none',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.8)',
+          zIndex: 1500,
         }}
       >
         <CircularProgress color="primary" size={40} />
-      </Popover>
+      </Box>
 
-      {/* Success Message Popover */}
-      <Popover
-        open={showSuccessMessage}
-        onClose={() => {}} // Disable manual closing; handled by timer
-        anchorReference="anchorPosition"
-        anchorPosition={{ top: window.innerHeight / 2.5, left: window.innerWidth / 2 }}
-        transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-        PaperProps={{
-          component: SuccessPopoverPaper,
-          sx: { zIndex: 1500 },
+      {/* Success Message Overlay */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: showSuccessMessage ? 'block' : 'none',
+          zIndex: 1500,
         }}
       >
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 'bold',
-            color: '#1dd714',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <FaRegCheckCircle style={{ marginRight: 5 }} />
-          {numSelected} item{numSelected > 1 ? 's' : ''} deleted successfully
-        </Typography>
-      </Popover>
+        <SuccessPopoverPaper>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 'bold',
+              color: '#1dd714',
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <FaRegCheckCircle style={{ marginRight: 5 }} />
+            {numSelected} item{numSelected > 1 ? 's' : ''} deleted successfully
+          </Typography>
+        </SuccessPopoverPaper>
+      </Box>
     </>
   );
 }

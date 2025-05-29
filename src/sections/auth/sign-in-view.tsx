@@ -152,7 +152,7 @@ export function SignInView() {
             router.push('/');
           }, 3000);
         } else {
-          setBackendMessage(response.message || 'Invalid Emailid/Mobileno/Password');
+          setBackendMessage('Invalid Emailid/Mobileno/Password');
           setShowErrorMessage(true);
 
           setTimeout(() => {
@@ -257,7 +257,7 @@ export function SignInView() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h5">Admin Sign In</Typography>
+          <Typography variant="h5">Admin Sign in</Typography>
           <VerifiedUserIcon sx={{ color: 'primary.main', fontSize: 20 }} />
         </Box>
         <Typography
