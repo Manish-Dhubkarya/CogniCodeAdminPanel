@@ -36,7 +36,9 @@ export function UserView() {
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
-
+const handleDeleteRows=()=>{
+  return null
+}
   const notFound = !dataFiltered.length && !!filterName;
 
   return (
@@ -68,6 +70,8 @@ export function UserView() {
             setFilterName(event.target.value);
             table.onResetPage();
           }}
+            selectedIds={table.selected.map(Number)} // Use selected IDs
+          onDeleteRows={handleDeleteRows} 
         />
 
         <Scrollbar>
