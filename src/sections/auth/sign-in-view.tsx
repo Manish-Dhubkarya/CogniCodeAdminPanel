@@ -266,7 +266,7 @@ export function SignInView() {
             color: 'text.secondary',
           }}
         >
-          Don't have an account? 
+          Do not have an account?  
           <Link variant="subtitle2" sx={{ ml: 0.5, cursor: 'pointer' }} onClick={handleSignUpClick}>
              Sign up
           </Link>
