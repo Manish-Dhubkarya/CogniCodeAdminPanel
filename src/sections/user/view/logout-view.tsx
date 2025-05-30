@@ -14,6 +14,7 @@ export default function LogoutView() {
     router.push('/sign-in'); // Redirect to sign-in
   }, [router, setUser]);
 
+  
   const handleLogoutCancel = useCallback(() => {
     router.push('/'); // Redirect to dashboard
   }, [router]);
